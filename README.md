@@ -1,6 +1,5 @@
 # 📦 StockSense: Next-Gen Inventory & Freight Management
 
-![StockSense Banner](https://img.shields.io/badge/Odoo%20Hackathon-Winner%20Material-FF6B6B?style=for-the-badge&logo=odoo&logoColor=white) 
 ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) 
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) 
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) 
@@ -87,4 +86,9 @@ StockSense utilizes strict Firestore security rules to protect business data.
 Built for the **Odoo Hackathon**. 
 StockSense aims to revolutionize the way small and medium enterprises handle their freight ledgers by providing enterprise-grade tools in an accessible, open-source package.
 
-*Developed with passion by smurtiranikhadanga.*
+---
+
+## 👥 Meet the Team
+- **Sandeep** – Team Leader (DevOps / Integrator)
+- **Smurtirani Khadanga** – Frontend Developer & UI/UX Designer
+- **Aastha Singh** – Backend Developer
