@@ -3,14 +3,18 @@ import { useApp } from '../../context/AppContext';
 import { Product } from '../../types';
 import { NewProductModal } from '../modals/NewProductModal';
 import { EditProductModal } from '../modals/EditProductModal';
+import { ReorderingRuleModal } from '../modals/ReorderingRuleModal';
 
 export const ProductsView: React.FC = () => {
   const { products, exportCsv, showToast } = useApp();
+  const [activeTab, setActiveTab] = useState<'catalog' | 'reordering'>('catalog');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showNewProductModal, setShowNewProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [reorderModalProduct, setReorderModalProduct] = useState<Product | null>(null);
+  const [showReorderModal, setShowReorderModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -77,6 +81,33 @@ export const ProductsView: React.FC = () => {
             </span>
           </div>
         </div>
+
+        {/* Navigation Sub-Tabs */}
+        <div className="flex items-center gap-2 border-b border-rule pt-2">
+          <button
+            onClick={() => { setActiveTab('catalog'); setCurrentPage(1); }}
+            className={`px-3 py-2 font-label-md text-label-md uppercase tracking-wider transition-colors cursor-pointer border-b-2 ${
+              activeTab === 'catalog'
+                ? 'border-primary-container text-primary-container font-bold'
+                : 'border-transparent text-secondary hover:text-on-surface'
+            }`}
+          >
+            Catalog Items ({products.length})
+          </button>
+          <button
+            onClick={() => { setActiveTab('reordering'); setCurrentPage(1); }}
+            className={`px-3 py-2 font-label-md text-label-md uppercase tracking-wider transition-colors cursor-pointer border-b-2 flex items-center gap-2 ${
+              activeTab === 'reordering'
+                ? 'border-primary-container text-primary-container font-bold'
+                : 'border-transparent text-secondary hover:text-on-surface'
+            }`}
+          >
+            <span>Reordering Rules</span>
+            <span className="px-2 py-0.5 bg-primary-container text-white text-[10px] rounded-full font-bold">
+              {products.filter((p) => p.freeToUse <= (p.minThreshold || 50)).length} Alerts
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Controls / Action Strip */}
@@ -142,7 +173,19 @@ export const ProductsView: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setReorderModalProduct(null);
+              setShowReorderModal(true);
+            }}
+            className="px-3.5 py-1.5 border border-primary-container text-primary-container hover:bg-primary-container/10 font-label-md text-label-md uppercase tracking-wider rounded-[2px] transition-colors flex items-center gap-1.5 cursor-pointer font-semibold"
+          >
+            <span className="material-symbols-outlined text-[16px]">settings_suggest</span>
+            <span>Configure Rule</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setShowNewProductModal(true)}
@@ -156,86 +199,203 @@ export const ProductsView: React.FC = () => {
 
       {/* Tally Ledger Table Container */}
       <div className="w-full bg-surface border-t border-on-surface overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[760px]" id="products-table">
-          <thead>
-            <tr className="border-b border-on-surface select-none">
-              <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider w-[180px]">
-                SKU
-              </th>
-              <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider">
-                Name
-              </th>
-              <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider w-[180px]">
-                Category
-              </th>
-              <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider w-[130px]">
-                Unit
-              </th>
-              <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider text-right w-[130px]">
-                On hand
-              </th>
-              <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider text-right w-[130px]">
-                Free to use
-              </th>
-              <th className="py-2.5 px-2 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider w-[48px] text-center">
-                
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-rule font-body-md text-body-md text-on-surface">
-            {displayedProducts.length > 0 ? (
-              displayedProducts.map((p) => (
-                <tr
-                  key={p.sku}
-                  className="hover:bg-surface-container transition-colors group cursor-default"
-                >
-                  <td className="py-2.5 px-3 font-label-md text-label-md font-medium text-on-surface tracking-wide">
-                    {p.sku}
-                  </td>
-                  <td className="py-2.5 px-3 font-body-md text-body-md text-on-surface font-medium">
-                    {p.name}
-                  </td>
-                  <td className="py-2.5 px-3 font-body-sm text-body-sm text-secondary">
-                    {p.category}
-                  </td>
-                  <td className="py-2.5 px-3 font-label-md text-label-md text-on-surface-variant">
-                    {p.unit}
-                  </td>
-                  <td className="py-2.5 px-3 font-label-md text-label-md text-right tabular-nums text-on-surface font-semibold">
-                    {p.onHand.toLocaleString()}
-                  </td>
-                  <td className="py-2.5 px-3 font-label-md text-label-md text-right tabular-nums text-on-surface">
-                    {p.freeToUse.toLocaleString()}
-                  </td>
-                  <td className="py-2.5 px-2 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <button
-                        onClick={() => setEditingProduct(p)}
-                        className="text-secondary hover:text-primary-container transition-colors cursor-pointer p-1 rounded-[2px]"
-                        title="Edit / Update Product SKU"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">edit</span>
-                      </button>
-                      <button
-                        onClick={() => showToast(`INSPECTION LOG VIEWED: ${p.sku}`)}
-                        className="text-secondary hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer p-1"
-                        title="Inspect SKU Ledger"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">more_vert</span>
-                      </button>
-                    </div>
+        {activeTab === 'catalog' ? (
+          <table className="w-full text-left border-collapse min-w-[760px]" id="products-table">
+            <thead>
+              <tr className="border-b border-on-surface select-none">
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider w-[180px]">
+                  SKU
+                </th>
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider">
+                  Name
+                </th>
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider w-[180px]">
+                  Category
+                </th>
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider w-[130px]">
+                  Unit
+                </th>
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider text-right w-[130px]">
+                  On hand
+                </th>
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider text-right w-[130px]">
+                  Free to use
+                </th>
+                <th className="py-2.5 px-2 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider w-[80px] text-center">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-rule font-body-md text-body-md text-on-surface">
+              {displayedProducts.length > 0 ? (
+                displayedProducts.map((p) => (
+                  <tr
+                    key={p.sku}
+                    className="hover:bg-surface-container transition-colors group cursor-default"
+                  >
+                    <td className="py-2.5 px-3 font-label-md text-label-md font-medium text-on-surface tracking-wide">
+                      {p.sku}
+                    </td>
+                    <td className="py-2.5 px-3 font-body-md text-body-md text-on-surface font-medium">
+                      {p.name}
+                    </td>
+                    <td className="py-2.5 px-3 font-body-sm text-body-sm text-secondary">
+                      {p.category}
+                    </td>
+                    <td className="py-2.5 px-3 font-label-md text-label-md text-on-surface-variant">
+                      {p.unit}
+                    </td>
+                    <td className="py-2.5 px-3 font-label-md text-label-md text-right tabular-nums text-on-surface font-semibold">
+                      {p.onHand.toLocaleString()}
+                    </td>
+                    <td className="py-2.5 px-3 font-label-md text-label-md text-right tabular-nums text-on-surface">
+                      {p.freeToUse.toLocaleString()}
+                    </td>
+                    <td className="py-2.5 px-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => setEditingProduct(p)}
+                          className="text-secondary hover:text-primary-container transition-colors cursor-pointer p-1 rounded-[2px]"
+                          title="Edit / Update Product SKU"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">edit</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setReorderModalProduct(p);
+                            setShowReorderModal(true);
+                          }}
+                          className="text-secondary hover:text-primary-container transition-colors cursor-pointer p-1 rounded-[2px]"
+                          title="Configure Reordering Rule"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">settings_suggest</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-secondary font-label-md">
+                    // NO ITEMS MATCH THE CURRENT FILTER QUERY //
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={7} className="py-12 text-center text-secondary font-label-md">
-                  // NO ITEMS MATCH THE CURRENT FILTER QUERY //
-                </td>
+              )}
+            </tbody>
+          </table>
+        ) : (
+          /* Reordering Rules Dedicated Table */
+          <table className="w-full text-left border-collapse min-w-[840px]" id="reordering-rules-table">
+            <thead>
+              <tr className="border-b border-on-surface select-none">
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider w-[160px]">
+                  SKU
+                </th>
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider">
+                  Product Description
+                </th>
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider w-[160px]">
+                  Location / Bay
+                </th>
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider text-right w-[110px]">
+                  Min Qty
+                </th>
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider text-right w-[110px]">
+                  Max Target
+                </th>
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider text-right w-[110px]">
+                  Free Stock
+                </th>
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider w-[160px]">
+                  Reorder Status
+                </th>
+                <th className="py-2.5 px-3 font-label-md text-label-md uppercase text-secondary font-medium tracking-wider w-[160px] text-right">
+                  Actions
+                </th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-rule font-body-md text-body-md text-on-surface">
+              {displayedProducts.length > 0 ? (
+                displayedProducts.map((p) => {
+                  const minThreshold = p.minThreshold || 50;
+                  const maxThreshold = p.maxThreshold || (minThreshold * 3);
+                  const isLow = p.freeToUse <= minThreshold;
+                  const toOrder = Math.max(0, maxThreshold - p.freeToUse);
+
+                  return (
+                    <tr
+                      key={p.sku}
+                      className="hover:bg-surface-container transition-colors group cursor-default"
+                    >
+                      <td className="py-2.5 px-3 font-label-md text-label-md font-medium text-on-surface tracking-wide">
+                        {p.sku}
+                      </td>
+                      <td className="py-2.5 px-3 font-body-md text-body-md text-on-surface font-medium">
+                        {p.name}
+                      </td>
+                      <td className="py-2.5 px-3 font-label-md text-label-md text-secondary uppercase font-mono">
+                        {p.location || 'WH-A / RACK-14'}
+                      </td>
+                      <td className="py-2.5 px-3 font-label-md text-label-md text-right tabular-nums text-tertiary font-bold">
+                        {minThreshold.toLocaleString()}
+                      </td>
+                      <td className="py-2.5 px-3 font-label-md text-label-md text-right tabular-nums text-on-surface font-semibold">
+                        {maxThreshold.toLocaleString()}
+                      </td>
+                      <td className="py-2.5 px-3 font-label-md text-label-md text-right tabular-nums text-on-surface font-bold">
+                        {p.freeToUse.toLocaleString()} {p.unit}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        {isLow ? (
+                          <span className="px-2 py-0.5 bg-primary-container/20 text-primary-container border border-primary-container/30 font-label-sm text-[10px] uppercase font-bold rounded-[2px] tracking-wider inline-flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-primary-container rounded-full animate-pulse" />
+                            REORDER REQUIRED
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 bg-[#3F6B4A]/20 text-[#3F6B4A] border border-[#3F6B4A]/30 font-label-sm text-[10px] uppercase font-bold rounded-[2px] tracking-wider">
+                            STOCK OPTIMAL
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => {
+                              setReorderModalProduct(p);
+                              setShowReorderModal(true);
+                            }}
+                            className="px-2.5 py-1 border border-rule hover:bg-surface-container font-label-sm text-[10px] uppercase text-on-surface transition-colors cursor-pointer rounded-[2px]"
+                            title="Edit Reorder Threshold Rules"
+                          >
+                            Set Rule
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setReorderModalProduct(p);
+                              setShowReorderModal(true);
+                            }}
+                            disabled={toOrder <= 0}
+                            className="px-2.5 py-1 bg-primary-container hover:bg-[#8E4217] text-white font-label-sm text-[10px] uppercase transition-colors cursor-pointer rounded-[2px] disabled:opacity-40"
+                            title={`Trigger procurement for +${toOrder} ${p.unit}`}
+                          >
+                            Procure (+{toOrder})
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-secondary font-label-md">
+                    // NO REORDERING RULES FOUND FOR CURRENT FILTER //
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Table Pagination & Ledger Footer Stamp */}
@@ -321,6 +481,17 @@ export const ProductsView: React.FC = () => {
       {/* Edit Product Modal */}
       {editingProduct && (
         <EditProductModal product={editingProduct} onClose={() => setEditingProduct(null)} />
+      )}
+
+      {/* Reordering Rule Modal */}
+      {showReorderModal && (
+        <ReorderingRuleModal
+          product={reorderModalProduct || undefined}
+          onClose={() => {
+            setShowReorderModal(false);
+            setReorderModalProduct(null);
+          }}
+        />
       )}
     </div>
   );

@@ -9,6 +9,7 @@ export interface Product {
   freeToUse: number;
   location?: string;
   minThreshold?: number;
+  maxThreshold?: number;
 }
 
 export interface ReceiptLineItem {
