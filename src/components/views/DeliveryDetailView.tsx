@@ -176,7 +176,7 @@ export const DeliveryDetailView: React.FC = () => {
       <div className="pt-4 pb-6">
         <div className="flex items-center justify-between pb-3">
           <span className="font-label-md text-label-md text-tertiary uppercase tracking-widest">
-            // SEC-03 · BILL OF LADING LINE ITEMS ({delivery.items.length} TOTAL)
+            // SEC-03 · BILL OF LADING LINE ITEMS ({delivery?.items?.length || 0} TOTAL)
           </span>
           <span className="font-label-sm text-label-sm text-secondary uppercase font-semibold">
             TARE AUDIT: PASSED

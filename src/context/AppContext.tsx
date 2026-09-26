@@ -96,33 +96,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Ledger state
   const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('stocksense_products');
-    return saved ? JSON.parse(saved) : initialProducts;
+    try {
+      const saved = localStorage.getItem('stocksense_products');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed || initialProducts;
+    } catch { return initialProducts; }
   });
 
   const [receipts, setReceipts] = useState<Receipt[]>(() => {
-    const saved = localStorage.getItem('stocksense_receipts');
-    return saved ? JSON.parse(saved) : initialReceipts;
+    try {
+      const saved = localStorage.getItem('stocksense_receipts');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed || initialReceipts;
+    } catch { return initialReceipts; }
   });
 
   const [delivery, setDelivery] = useState<OutboundDelivery>(() => {
-    const saved = localStorage.getItem('stocksense_delivery');
-    return saved ? JSON.parse(saved) : initialDelivery;
+    try {
+      const saved = localStorage.getItem('stocksense_delivery');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed || initialDelivery;
+    } catch { return initialDelivery; }
   });
 
   const [adjustmentItems, setAdjustmentItems] = useState<StockAdjustmentItem[]>(() => {
-    const saved = localStorage.getItem('stocksense_adjustments');
-    return saved ? JSON.parse(saved) : initialAdjustmentItems;
+    try {
+      const saved = localStorage.getItem('stocksense_adjustments');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed || initialAdjustmentItems;
+    } catch { return initialAdjustmentItems; }
   });
 
   const [moveRecords, setMoveRecords] = useState<MoveRecord[]>(() => {
-    const saved = localStorage.getItem('stocksense_move_records');
-    return saved ? JSON.parse(saved) : initialMoveRecords;
+    try {
+      const saved = localStorage.getItem('stocksense_move_records');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed || initialMoveRecords;
+    } catch { return initialMoveRecords; }
   });
 
   const [warehouses, setWarehouses] = useState<WarehouseSite[]>(() => {
-    const saved = localStorage.getItem('stocksense_warehouses');
-    return saved ? JSON.parse(saved) : initialWarehouses;
+    try {
+      const saved = localStorage.getItem('stocksense_warehouses');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return parsed || initialWarehouses;
+    } catch { return initialWarehouses; }
   });
 
   const [subLocations] = useState<SubLocationZone[]>(initialSubLocations);
