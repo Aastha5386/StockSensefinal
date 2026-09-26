@@ -82,14 +82,25 @@ export const useFirebaseReceipts = () => {
           const productRef = doc(collection(db, 'products'), docId);
           const productSnap = await transaction.get(productRef);
           
+          let productData;
           if (!productSnap.exists()) {
-            throw new Error(`Product ${item.sku} not found`);
+            // Auto-create product if it doesn't exist in the catalog
+            productData = {
+              sku: item.sku,
+              name: item.product || 'Unknown Product',
+              category: 'Auto-Registered',
+              unit: item.unit || 'PCS',
+              onHand: 0,
+              freeToUse: 0,
+              location: 'TBD'
+            };
+          } else {
+            productData = productSnap.data();
           }
           
-          const product = productSnap.data();
-          const newQuantity = product.onHand + item.quantity;
+          const newQuantity = (productData.onHand || 0) + item.quantity;
           
-          transaction.update(productRef, { onHand: newQuantity });
+          transaction.set(productRef, { ...productData, onHand: newQuantity }, { merge: true });
         }
 
         // Update receipt status

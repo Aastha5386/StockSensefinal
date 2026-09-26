@@ -49,18 +49,28 @@ export const useFirebaseDeliveries = () => {
           const productRef = doc(collection(db, 'products'), docId);
           const productSnap = await transaction.get(productRef);
           
+          let productData;
           if (!productSnap.exists()) {
-            throw new Error(`Product ${item.sku} not found`);
+            productData = {
+              sku: item.sku,
+              name: item.product || 'Unknown Product',
+              category: 'Auto-Registered',
+              unit: item.unit || 'PCS',
+              onHand: 0,
+              freeToUse: 0,
+              location: 'TBD'
+            };
+          } else {
+            productData = productSnap.data();
           }
           
-          const product = productSnap.data();
-          const newQuantity = product.onHand - item.quantity;
+          const newQuantity = (productData.onHand || 0) - item.quantity;
 
           if (newQuantity < 0) {
-            throw new Error(`Insufficient stock for ${item.sku}. Available: ${product.onHand}, Required: ${item.quantity}`);
+            throw new Error(`Insufficient stock for ${item.sku}. Available: ${productData.onHand || 0}, Required: ${item.quantity}`);
           }
           
-          transaction.update(productRef, { onHand: newQuantity });
+          transaction.set(productRef, { ...productData, onHand: newQuantity }, { merge: true });
         }
 
         // Update delivery status
