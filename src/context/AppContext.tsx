@@ -26,8 +26,6 @@ import {
 } from '../data/initialData';
 
 interface AppContextType {
-  currentScreen: ViewScreen;
-  setCurrentScreen: (screen: ViewScreen) => void;
   selectedReceiptId: string;
   setSelectedReceiptId: (id: string) => void;
   selectedDeliveryId: string;
@@ -79,7 +77,6 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentScreen, setCurrentScreen] = useState<ViewScreen>('dashboard');
   const [selectedReceiptId, setSelectedReceiptId] = useState<string>('RCV-2023-88401');
   const [selectedDeliveryId, setSelectedDeliveryId] = useState<string>('WH/OUT/0042');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -184,7 +181,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               email: data.email || user.email || '',
               role: data.role || 'warehouse_staff',
               operatorId: data.firstName || 'OP-NEW',
-              avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.uid
+              avatarUrl: data.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.uid
             });
           } else {
             setUserRole('warehouse_staff');
@@ -200,19 +197,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } catch (e) {
           setUserRole('warehouse_staff');
         }
-        if (currentScreen === 'login') {
-          setCurrentScreen('dashboard');
-        }
       } else {
         setIsAuthenticated(false);
         setUserUid(null);
         setUserRole(null);
-        setCurrentScreen('login');
       }
       setAuthLoading(false);
     });
     return unsubscribe;
-  }, [currentScreen]);
+  }, []);
 
   const login = async (email: string, password?: string) => {
     if (!password) return false;
@@ -491,8 +484,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider
       value={{
-        currentScreen,
-        setCurrentScreen,
         selectedReceiptId,
         setSelectedReceiptId,
         selectedDeliveryId,

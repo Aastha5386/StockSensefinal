@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { SidebarRail } from './components/layout/SidebarRail';
 import { HeaderBar } from './components/layout/HeaderBar';
@@ -22,11 +23,26 @@ import { SettingsView } from './components/views/SettingsView';
 import { ProfileStationView } from './components/views/ProfileStationView';
 import { AdminUsersView } from './components/views/AdminUsersView';
 
-const MainAppContent: React.FC = () => {
-  const { currentScreen, isAuthenticated, authLoading, userRole } = useApp();
+const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  return (
+    <div className="min-h-screen bg-surface text-on-surface antialiased flex flex-col selection:bg-primary-container selection:text-white">
+      <SidebarRail mobileOpen={mobileMenuOpen} setMobileOpen={setMobileMenuOpen} />
+      <div className="flex-1 flex flex-col md:pl-14">
+        <HeaderBar onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
+        <main className="relative pt-14 w-full min-h-screen bg-surface transition-colors">
+          {children}
+        </main>
+      </div>
+      <ToastNotification />
+    </div>
+  );
+};
 
-  // If loading Firebase Auth, show a spinner or nothing
+const AuthGuard: React.FC<{ children: React.ReactNode, requireAdmin?: boolean }> = ({ children, requireAdmin }) => {
+  const { isAuthenticated, authLoading, userRole } = useApp();
+  const location = useLocation();
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface text-on-surface">
@@ -35,69 +51,59 @@ const MainAppContent: React.FC = () => {
     );
   }
 
-  // If user is not logged in or explicitly at login screen, show the Login Screen
-  if (!isAuthenticated || currentScreen === 'login') {
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  if (requireAdmin && userRole !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const MainAppContent: React.FC = () => {
+  const { isAuthenticated, authLoading } = useApp();
+
+  if (authLoading) {
     return (
-      <>
-        <LoginView />
-        <ToastNotification />
-      </>
+      <div className="min-h-screen flex items-center justify-center bg-surface text-on-surface">
+        <div className="text-secondary font-label-lg tracking-wider">INITIALIZING SESSION...</div>
+      </div>
     );
   }
 
-  const renderActiveScreen = () => {
-    switch (currentScreen) {
-      case 'dashboard':
-        return <DashboardView />;
-      case 'products':
-        return <ProductsView />;
-      case 'receipts':
-        return <ReceiptsView />;
-      case 'receipt-detail':
-        return <ReceiptDetailView />;
-      case 'delivery-detail':
-        return <DeliveryDetailView />;
-      case 'transfers':
-        return <TransfersView />;
-      case 'move-history':
-        return <MoveHistoryView />;
-      case 'settings':
-        return userRole === 'warehouse_staff' ? <DashboardView /> : <SettingsView />;
-      case 'settings-users':
-        return userRole === 'admin' ? <AdminUsersView /> : <DashboardView />;
-      case 'profile-station':
-        return <ProfileStationView />;
-      default:
-        return <DashboardView />;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-surface text-on-surface antialiased flex flex-col selection:bg-primary-container selection:text-white">
-      {/* 56px Utility Sidebar Rail (Left) */}
-      <SidebarRail mobileOpen={mobileMenuOpen} setMobileOpen={setMobileMenuOpen} />
-
-      {/* Main Viewport Container */}
-      <div className="flex-1 flex flex-col md:pl-14">
-        {/* Top Header Bar */}
-        <HeaderBar onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
-
-        {/* Scrollable Main Canvas */}
-        <main className="relative pt-14 w-full min-h-screen bg-surface transition-colors">
-          {renderActiveScreen()}
-        </main>
-      </div>
-
-      {/* Global Toast Notification */}
-      <ToastNotification />
-    </div>
+    <Routes>
+      <Route path="/login" element={
+        isAuthenticated ? <Navigate to="/dashboard" replace /> : 
+        <><LoginView /><ToastNotification /></>
+      } />
+      
+      <Route path="/" element={<AuthGuard><MainLayout><DashboardView /></MainLayout></AuthGuard>} />
+      <Route path="/dashboard" element={<AuthGuard><MainLayout><DashboardView /></MainLayout></AuthGuard>} />
+      <Route path="/products" element={<AuthGuard><MainLayout><ProductsView /></MainLayout></AuthGuard>} />
+      <Route path="/receipts" element={<AuthGuard><MainLayout><ReceiptsView /></MainLayout></AuthGuard>} />
+      <Route path="/receipts/:id" element={<AuthGuard><MainLayout><ReceiptDetailView /></MainLayout></AuthGuard>} />
+      <Route path="/deliveries" element={<AuthGuard><MainLayout><DeliveryDetailView /></MainLayout></AuthGuard>} />
+      <Route path="/transfers" element={<AuthGuard><MainLayout><TransfersView /></MainLayout></AuthGuard>} />
+      <Route path="/move-history" element={<AuthGuard><MainLayout><MoveHistoryView /></MainLayout></AuthGuard>} />
+      <Route path="/profile-station" element={<AuthGuard><MainLayout><ProfileStationView /></MainLayout></AuthGuard>} />
+      
+      <Route path="/settings" element={<AuthGuard requireAdmin><MainLayout><SettingsView /></MainLayout></AuthGuard>} />
+      <Route path="/settings-users" element={<AuthGuard requireAdmin><MainLayout><AdminUsersView /></MainLayout></AuthGuard>} />
+      
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
   );
 };
 
 export default function App() {
   return (
-    <AppProvider>
-      <MainAppContent />
-    </AppProvider>
+    <BrowserRouter>
+      <AppProvider>
+        <MainAppContent />
+      </AppProvider>
+    </BrowserRouter>
   );
 }

@@ -1,8 +1,10 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 
 export const DeliveryDetailView: React.FC = () => {
-  const { delivery, toggleDeliveryChecklist, validateDelivery, setCurrentScreen } = useApp();
+  const { delivery, toggleDeliveryChecklist, validateDelivery } = useApp();
+  const navigate = useNavigate();
 
   return (
     <div className="w-full max-w-6xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-6">
@@ -10,7 +12,7 @@ export const DeliveryDetailView: React.FC = () => {
       <div className="flex flex-col gap-2 pb-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <button
-            onClick={() => setCurrentScreen('dashboard')}
+            onClick={() => navigate('/dashboard')}
             className="flex items-center gap-1.5 font-label-md text-label-md text-tertiary hover:text-on-surface uppercase tracking-wider transition-colors cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px]">arrow_back</span>

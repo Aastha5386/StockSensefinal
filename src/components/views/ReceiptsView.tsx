@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { OperationalStatus, Receipt } from '../../types';
 import { NewReceiptModal } from '../modals/NewReceiptModal';
 
 export const ReceiptsView: React.FC = () => {
-  const { receipts, setCurrentScreen, setSelectedReceiptId, updateReceiptStatus } = useApp();
+  const { receipts, setSelectedReceiptId, updateReceiptStatus } = useApp();
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'archive'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortAsc, setSortAsc] = useState(false);
@@ -38,7 +40,7 @@ export const ReceiptsView: React.FC = () => {
 
   const handleRowClick = (receipt: Receipt) => {
     setSelectedReceiptId(receipt.id);
-    setCurrentScreen('receipt-detail');
+    navigate(`/receipts/${receipt.id}`);
   };
 
   const handleToggleSelectAll = () => {

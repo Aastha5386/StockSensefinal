@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { ASSET_IMAGES } from '../../data/initialData';
 
@@ -7,7 +8,8 @@ interface HeaderBarProps {
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({ onToggleMobileMenu }) => {
-  const { isDarkMode, toggleDarkMode, userProfile, logout, setCurrentScreen } = useApp();
+  const { isDarkMode, toggleDarkMode, userProfile, logout } = useApp();
+  const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -130,7 +132,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onToggleMobileMenu }) => {
               <div className="flex flex-col py-1">
                 <button
                   onClick={() => {
-                    setCurrentScreen('profile-station');
+                    navigate('/profile-station');
                     setProfileOpen(false);
                   }}
                   className="flex items-center gap-2.5 px-3 py-2 text-on-surface hover:bg-surface-container transition-colors text-left"

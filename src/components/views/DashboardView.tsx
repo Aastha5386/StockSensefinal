@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 
 export const DashboardView: React.FC = () => {
-  const { setCurrentScreen, setSelectedReceiptId, products, receipts, delivery, moveRecords } = useApp();
+  const { setSelectedReceiptId, products, receipts, delivery, moveRecords } = useApp();
+  const navigate = useNavigate();
   const [utcTime, setUtcTime] = useState<string>('');
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export const DashboardView: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 border-y border-rule bg-surface">
           {/* Column 1: Total Products */}
           <div
-            onClick={() => setCurrentScreen('products')}
+            onClick={() => navigate('/products')}
             className="flex flex-col p-5 border-r border-rule cursor-pointer hover:bg-surface-container transition-colors group"
           >
             <span className="font-label-md text-label-md text-tertiary mb-3 uppercase tracking-wider group-hover:text-on-surface">
@@ -66,7 +68,7 @@ export const DashboardView: React.FC = () => {
 
           {/* Column 2: Low Stock (Oxblood / Terracotta Indicator) */}
           <div
-            onClick={() => setCurrentScreen('products')}
+            onClick={() => navigate('/products')}
             className="flex flex-col p-5 border-r border-rule cursor-pointer hover:bg-surface-container transition-colors group"
           >
             <div className="flex items-center justify-between mb-3">
@@ -90,7 +92,7 @@ export const DashboardView: React.FC = () => {
 
           {/* Column 3: Pending Receipts */}
           <div
-            onClick={() => setCurrentScreen('receipts')}
+            onClick={() => navigate('/receipts')}
             className="flex flex-col p-5 border-r border-rule cursor-pointer hover:bg-surface-container transition-colors group"
           >
             <span className="font-label-md text-label-md text-tertiary mb-3 uppercase tracking-wider group-hover:text-on-surface">
@@ -106,7 +108,7 @@ export const DashboardView: React.FC = () => {
 
           {/* Column 4: Pending Deliveries */}
           <div
-            onClick={() => setCurrentScreen('delivery-detail')}
+            onClick={() => navigate('/deliveries')}
             className="flex flex-col p-5 border-r border-rule cursor-pointer hover:bg-surface-container transition-colors group"
           >
             <span className="font-label-md text-label-md text-tertiary mb-3 uppercase tracking-wider group-hover:text-on-surface">
@@ -122,7 +124,7 @@ export const DashboardView: React.FC = () => {
 
           {/* Column 5: Internal Transfers Scheduled */}
           <div
-            onClick={() => setCurrentScreen('transfers')}
+            onClick={() => navigate('/transfers')}
             className="flex flex-col p-5 cursor-pointer hover:bg-surface-container transition-colors group"
           >
             <span className="font-label-md text-label-md text-tertiary mb-3 uppercase tracking-wider group-hover:text-on-surface">
@@ -155,7 +157,7 @@ export const DashboardView: React.FC = () => {
           <div
             onClick={() => {
               setSelectedReceiptId('RCV-2023-88401');
-              setCurrentScreen('receipts');
+              navigate('/receipts');
             }}
             className="group flex flex-col md:flex-row md:items-center justify-between py-4 px-2 transition-colors duration-100 hover:bg-surface-container cursor-pointer"
           >
@@ -188,7 +190,7 @@ export const DashboardView: React.FC = () => {
 
           {/* Row 2: Delivery */}
           <div
-            onClick={() => setCurrentScreen('delivery-detail')}
+            onClick={() => navigate('/deliveries')}
             className="group flex flex-col md:flex-row md:items-center justify-between py-4 px-2 transition-colors duration-100 hover:bg-surface-container cursor-pointer"
           >
             <div className="flex items-center gap-6 min-w-0">

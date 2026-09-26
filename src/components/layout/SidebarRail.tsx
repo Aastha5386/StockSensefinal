@@ -1,6 +1,6 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ViewScreen } from '../../types';
 import { ASSET_IMAGES } from '../../data/initialData';
 
 interface SidebarRailProps {
@@ -9,34 +9,36 @@ interface SidebarRailProps {
 }
 
 export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileOpen }) => {
-  const { currentScreen, setCurrentScreen, userRole } = useApp();
+  const { userRole } = useApp();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const navItems: { screen: ViewScreen; title: string; icon: string }[] = [
-    { screen: 'dashboard', title: 'Dashboard', icon: 'dashboard' },
-    { screen: 'products', title: 'Product Catalog', icon: 'inventory_2' },
-    { screen: 'receipts', title: 'Receipts Management', icon: 'receipt_long' },
-    { screen: 'transfers', title: 'Transfers & Outbound', icon: 'sync_alt' },
-    { screen: 'move-history', title: 'Stock Move History', icon: 'history' },
+  const navItems = [
+    { screen: '/dashboard', title: 'Dashboard', icon: 'dashboard' },
+    { screen: '/products', title: 'Product Catalog', icon: 'inventory_2' },
+    { screen: '/receipts', title: 'Receipts Management', icon: 'receipt_long' },
+    { screen: '/transfers', title: 'Transfers & Outbound', icon: 'sync_alt' },
+    { screen: '/move-history', title: 'Stock Move History', icon: 'history' },
   ];
 
-  const bottomItems: { screen: ViewScreen; title: string; icon: string }[] = [];
+  const bottomItems = [];
   if (userRole !== 'warehouse_staff') {
-    bottomItems.push({ screen: 'settings', title: 'System Settings', icon: 'tune' });
+    bottomItems.push({ screen: '/settings', title: 'System Settings', icon: 'tune' });
   }
   if (userRole === 'admin') {
-    bottomItems.push({ screen: 'settings-users', title: 'User Management', icon: 'manage_accounts' });
+    bottomItems.push({ screen: '/settings-users', title: 'User Management', icon: 'manage_accounts' });
   }
-  bottomItems.push({ screen: 'profile-station', title: 'Profile Station', icon: 'account_circle' });
+  bottomItems.push({ screen: '/profile-station', title: 'Profile Station', icon: 'account_circle' });
 
-  const handleNav = (screen: ViewScreen) => {
-    setCurrentScreen(screen);
+  const handleNav = (screen: string) => {
+    navigate(screen);
     if (setMobileOpen) setMobileOpen(false);
   };
 
-  const isActive = (screen: ViewScreen) => {
-    if (currentScreen === screen) return true;
-    if (screen === 'receipts' && currentScreen === 'receipt-detail') return true;
-    if (screen === 'transfers' && currentScreen === 'delivery-detail') return true;
+  const isActive = (screen: string) => {
+    if (location.pathname === screen) return true;
+    if (screen === '/receipts' && location.pathname.startsWith('/receipts/')) return true;
+    if (screen === '/transfers' && location.pathname.startsWith('/deliveries/')) return true;
     return false;
   };
 
@@ -47,7 +49,7 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileO
         <div className="flex flex-col items-start w-full gap-4">
           {/* Brand Logo & Name */}
           <button
-            onClick={() => handleNav('dashboard')}
+            onClick={() => handleNav('/dashboard')}
             className="flex items-center gap-3 w-full h-10 px-1 hover:opacity-90 transition-all cursor-pointer rounded-[2px]"
             title="StockSense Freight Ledger"
           >

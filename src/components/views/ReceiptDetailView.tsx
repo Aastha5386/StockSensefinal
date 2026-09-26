@@ -1,8 +1,10 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 
 export const ReceiptDetailView: React.FC = () => {
-  const { receipts, selectedReceiptId, setCurrentScreen, validateReceipt } = useApp();
+  const { receipts, selectedReceiptId, validateReceipt } = useApp();
+  const navigate = useNavigate();
 
   const receipt =
     receipts.find((r) => r.id === selectedReceiptId) ||
@@ -29,7 +31,7 @@ export const ReceiptDetailView: React.FC = () => {
       <div className="flex flex-col gap-2 border-b border-rule pb-3">
         <div className="flex items-center justify-between text-on-surface-variant flex-wrap gap-2">
           <button
-            onClick={() => setCurrentScreen('receipts')}
+            onClick={() => navigate('/receipts')}
             className="flex items-center gap-1.5 font-label-md text-label-md text-tertiary hover:text-on-surface uppercase tracking-wider transition-colors cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px]">arrow_back</span>
