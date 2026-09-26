@@ -1,12 +1,12 @@
-# 🏆 Odoo Hackathon Project
+# 🏆 Odoo Hackathon 2026 Project
 
-Welcome to our project repository for the Odoo Hackathon! 🚀 
+Welcome to our project repository for the Odoo LPU Hackathon 2026! 🚀
 
-This repository contains our innovative solution built on the Odoo framework.
+This repository contains our innovative solution, built using modern web technologies to deliver an exceptional user experience, likely integrating with or inspired by Odoo ecosystem concepts.
 
 ## ✨ Project Overview
 
-> **Note:** *Please add a brief description of your hackathon project here. What problem does it solve? What are the key features?*
+A modern web application built for the hackathon, leveraging AI (Google GenAI) and an interactive frontend to solve our problem statement efficiently.
 
 ## 👥 The Team
 
@@ -20,30 +20,38 @@ We are a passionate team of developers and designers, ready to build something a
 
 ## 🛠️ Technology Stack
 
-- **Framework:** Odoo
-- **Backend:** Python, PostgreSQL
-- **Frontend:** XML, JavaScript, SCSS/CSS
-- **DevOps:** Docker (Optional/Recommended)
+- **Frontend Framework:** React 19, Vite
+- **Styling:** Tailwind CSS (v4), Motion (Framer Motion)
+- **Icons:** Lucide React
+- **AI Integration:** Google GenAI SDK
+- **Language:** TypeScript
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Odoo (Target Version: e.g., 17.0)
-- Python 3.10+
-- PostgreSQL
+- Node.js (v18 or higher recommended)
+- npm or yarn
 
-### Installation
+### Installation & Running Locally
 
 1. Clone the repository:
    ```bash
-   git clone <repository_url>
+   git clone https://github.com/sandeepkarmata/odoo-lpu-hackathon-2026.git
+   cd odoo-lpu-hackathon-2026
    ```
-2. Add the module path to your Odoo configuration file (`odoo.conf`):
-   ```ini
-   addons_path = /path/to/odoo/addons,/path/to/this/repository
+2. Install dependencies:
+   ```bash
+   npm install
    ```
-3. Update the app list in Odoo and install the module.
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+4. Build for production:
+   ```bash
+   npm run build
+   ```
 
 ## 🤝 Contributing
 

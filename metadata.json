@@ -1,0 +1,6 @@
+{
+  "name": "StockSense // Depot Freight Manifest & Ledger",
+  "description": "Central freight manifest, archival tally ledger, and warehouse inventory dispatch system with real-time discrepancy reconciliation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

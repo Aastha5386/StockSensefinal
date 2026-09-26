@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-surface: #fdf9f1;
+    --color-surface-dim: #dddad2;
+    --color-surface-bright: #fdf9f1;
+    --color-surface-lowest: #ffffff;
+    --color-surface-low: #f7f3eb;
+    --color-surface-container: #f1ede5;
+    --color-surface-high: #ece8e0;
+    --color-surface-highest: #e6e2da;
+    --color-on-surface: #1c1c17;
+    --color-on-surface-variant: #55433a;
+    --color-inverse-surface: #31302b;
+    --color-inverse-on-surface: #f4f0e8;
+    --color-outline: #887269;
+    --color-outline-variant: #dcc1b6;
+    --color-surface-variant: #e6e2da;
+    --color-surface-tint: #9a4614;
+    --color-primary: #893905;
+    --color-primary-container: #a8501e;
+    --color-on-primary: #ffffff;
+    --color-secondary: #625d5a;
+    --color-secondary-container: #e9e1dc;
+    --color-on-secondary-container: #68635f;
+    --color-tertiary: #575041;
+    --color-tertiary-container: #706858;
+    --color-on-tertiary-container: #f4e8d4;
+    --color-error: #ba1a1a;
+    --color-error-container: #ffdad6;
+    --color-rule-line: #ddd6c4;
+    --color-zebra-line: #f1ede4;
+  }
+
+  .dark {
+    --color-surface: #171614;
+    --color-surface-dim: #11100e;
+    --color-surface-bright: #1e1d1a;
+    --color-surface-lowest: #1c1b18;
+    --color-surface-low: #22201c;
+    --color-surface-container: #282622;
+    --color-surface-high: #312f29;
+    --color-surface-highest: #3b3832;
+    --color-on-surface: #f2ede4;
+    --color-on-surface-variant: #cfc5b8;
+    --color-inverse-surface: #f2ede4;
+    --color-inverse-on-surface: #1c1c17;
+    --color-outline: #8c8276;
+    --color-outline-variant: #433e36;
+    --color-surface-variant: #3a3731;
+    --color-surface-tint: #ffb693;
+    --color-primary: #ffb693;
+    --color-primary-container: #a8501e;
+    --color-on-primary: #ffffff;
+    --color-secondary: #9c958d;
+    --color-secondary-container: #33302b;
+    --color-on-secondary-container: #d9d2c8;
+    --color-tertiary: #b0a797;
+    --color-tertiary-container: #474238;
+    --color-on-tertiary-container: #f7edd9;
+    --color-error: #ffb4ab;
+    --color-error-container: #93000a;
+    --color-rule-line: #38352f;
+    --color-zebra-line: #22201d;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* Utility font helper classes */
+  .font-headline-xl {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    line-height: 40px;
+    font-weight: 600;
+  }
+  .font-headline-lg {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 600;
+  }
+  .font-headline-md {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    line-height: 26px;
+    font-weight: 500;
+  }
+  .font-body-lg {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    line-height: 22px;
+    font-weight: 400;
+  }
+  .font-body-md {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 400;
+  }
+  .font-body-sm {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 400;
+  }
+  .font-label-lg {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 18px;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  .font-label-md {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    line-height: 16px;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+  .font-label-sm {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    line-height: 14px;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+  }
+
+  /* Color helper utility classes mapped to CSS variables for smooth dark mode */
+  .bg-surface { background-color: var(--color-surface); }
+  .bg-surface-dim { background-color: var(--color-surface-dim); }
+  .bg-surface-bright { background-color: var(--color-surface-bright); }
+  .bg-surface-lowest { background-color: var(--color-surface-lowest); }
+  .bg-surface-low { background-color: var(--color-surface-low); }
+  .bg-surface-container { background-color: var(--color-surface-container); }
+  .bg-surface-high { background-color: var(--color-surface-high); }
+  .bg-surface-highest { background-color: var(--color-surface-highest); }
+  .bg-inverse-surface { background-color: var(--color-inverse-surface); }
+  .bg-surface-variant { background-color: var(--color-surface-variant); }
+  .bg-primary-container { background-color: var(--color-primary-container); }
+  .bg-primary { background-color: var(--color-primary); }
+
+  .text-on-surface { color: var(--color-on-surface); }
+  .text-on-surface-variant { color: var(--color-on-surface-variant); }
+  .text-secondary { color: var(--color-secondary); }
+  .text-tertiary { color: var(--color-tertiary); }
+  .text-on-primary { color: var(--color-on-primary); }
+  .text-primary-container { color: var(--color-primary-container); }
+  .text-primary { color: var(--color-primary); }
+  .text-error { color: var(--color-error); }
+  .text-inverse-on-surface { color: var(--color-inverse-on-surface); }
+
+  .border-rule { border-color: var(--color-rule-line); }
+  .border-surface-variant { border-color: var(--color-surface-variant); }
+  .border-outline-variant { border-color: var(--color-outline-variant); }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-outline-variant);
+    border-radius: 2px;
+  }
+}
