@@ -115,14 +115,15 @@ export interface SubLocationZone {
 }
 
 export interface UserProfile {
+  id?: string;
   name: string;
   operatorId: string;
   email: string;
   role: string;
-  dept: string;
-  station: string;
-  shiftDispatch: string;
-  logSignature: string;
+  dept?: string;
+  station?: string;
+  shiftDispatch?: string;
+  logSignature?: string;
   avatarUrl: string;
 }
 

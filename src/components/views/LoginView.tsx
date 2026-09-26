@@ -95,8 +95,8 @@ export const LoginView: React.FC = () => {
                       type="button"
                       onClick={async () => {
                         try {
-                          if (!window.recaptchaVerifier) {
-                            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                          if (!(window as any).recaptchaVerifier) {
+                            (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
                               size: 'invisible',
                               callback: (response: any) => {
                                 // reCAPTCHA solved
@@ -104,14 +104,14 @@ export const LoginView: React.FC = () => {
                             });
                           }
                           const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
-                          const confirmation = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
+                          const confirmation = await signInWithPhoneNumber(auth, formattedPhone, (window as any).recaptchaVerifier);
                           setConfirmationResult(confirmation);
                         } catch (error) {
                           console.error('Phone auth error:', error);
                           // Reset reCAPTCHA so they can try again
-                          if (window.recaptchaVerifier) {
-                            window.recaptchaVerifier.clear();
-                            window.recaptchaVerifier = undefined;
+                          if ((window as any).recaptchaVerifier) {
+                            (window as any).recaptchaVerifier.clear();
+                            (window as any).recaptchaVerifier = undefined;
                           }
                           alert("Failed to send SMS. Make sure the phone number includes the country code (e.g. +1).");
                         }
