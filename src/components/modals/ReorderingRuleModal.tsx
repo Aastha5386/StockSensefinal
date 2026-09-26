@@ -19,60 +19,76 @@ export const ReorderingRuleModal: React.FC<ReorderingRuleModalProps> = ({ produc
 
   const toOrderQty = Math.max(0, maxQty - (currentProduct?.freeToUse || 0));
 
-  const handleSaveRule = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSaveRule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentProduct) return;
 
-    updateProduct(currentProduct.sku, {
-      ...currentProduct,
-      minThreshold: Number(minQty) || 0,
-      maxThreshold: Number(maxQty) || 0,
-      location: location.trim(),
-    });
+    setIsSubmitting(true);
+    try {
+      await updateProduct(currentProduct.sku, {
+        ...currentProduct,
+        minThreshold: Number(minQty) || 0,
+        maxThreshold: Number(maxQty) || 0,
+        location: location.trim(),
+      });
 
-    showToast(`REORDERING RULE UPDATED // SKU: ${currentProduct.sku} (MIN: ${minQty} | MAX: ${maxQty})`);
-    onClose();
+      showToast(`REORDERING RULE UPDATED // SKU: ${currentProduct.sku} (MIN: ${minQty} | MAX: ${maxQty})`);
+      onClose();
+    } catch (err: any) {
+      showToast(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleTriggerProcurement = () => {
+  const handleTriggerProcurement = async () => {
     if (!currentProduct || toOrderQty <= 0) {
       showToast('STOCK IS ALREADY AT OR ABOVE TARGET MAXIMUM LEVEL');
       return;
     }
 
-    // Save rule first
-    updateProduct(currentProduct.sku, {
-      ...currentProduct,
-      minThreshold: Number(minQty) || 0,
-      maxThreshold: Number(maxQty) || 0,
-      location: location.trim(),
-    });
+    setIsSubmitting(true);
+    try {
+      // Save rule first
+      await updateProduct(currentProduct.sku, {
+        ...currentProduct,
+        minThreshold: Number(minQty) || 0,
+        maxThreshold: Number(maxQty) || 0,
+        location: location.trim(),
+      });
 
-    // Auto generate Inbound Receipt
-    const receiptId = `RCV-REORDER-${Math.floor(1000 + Math.random() * 9000)}`;
-    const newReceipt: Receipt = {
-      id: receiptId,
-      reference: `PO-AUTO-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
-      contact: 'Automated Procurement / Reorder Rule',
-      carrierCode: 'AUTO-REORDER',
-      toLocation: location,
-      scheduledUtc: `${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()} // 09:00 UTC`,
-      status: 'WAITING',
-      clearanceStatus: 'REORDER RULE TRIGGERED',
-      items: [
-        {
-          product: currentProduct.name,
-          sku: currentProduct.sku,
-          unit: currentProduct.unit,
-          quantity: toOrderQty,
-        },
-      ],
-      receiverNotes: `Auto-generated procurement receipt from Reordering Rule (Min: ${minQty}, Max: ${maxQty}, Target Procure: ${toOrderQty} ${currentProduct.unit}).`,
-    };
+      // Auto generate Inbound Receipt
+      const receiptId = `RCV-REORDER-${Math.floor(1000 + Math.random() * 9000)}`;
+      const newReceipt: Receipt = {
+        id: receiptId,
+        reference: `PO-AUTO-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+        contact: 'Automated Procurement / Reorder Rule',
+        carrierCode: 'AUTO-REORDER',
+        toLocation: location,
+        scheduledUtc: `${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()} // 09:00 UTC`,
+        status: 'WAITING',
+        clearanceStatus: 'REORDER RULE TRIGGERED',
+        items: [
+          {
+            product: currentProduct.name,
+            sku: currentProduct.sku,
+            unit: currentProduct.unit,
+            quantity: toOrderQty,
+          },
+        ],
+        receiverNotes: `Auto-generated procurement receipt from Reordering Rule (Min: ${minQty}, Max: ${maxQty}, Target Procure: ${toOrderQty} ${currentProduct.unit}).`,
+      };
 
-    addReceipt(newReceipt);
-    showToast(`PROCUREMENT MANIFEST CREATED: ${receiptId} (+${toOrderQty} ${currentProduct.unit})`);
-    onClose();
+      await addReceipt(newReceipt);
+      showToast(`PROCUREMENT MANIFEST CREATED: ${receiptId} (+${toOrderQty} ${currentProduct.unit})`);
+      onClose();
+    } catch (err: any) {
+      showToast(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -203,17 +219,22 @@ export const ReorderingRuleModal: React.FC<ReorderingRuleModalProps> = ({ produc
             <div className="flex items-center gap-2">
               <button
                 type="submit"
-                className="px-3 py-1.5 border border-primary-container text-primary-container hover:bg-primary-container/10 font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors cursor-pointer"
+                disabled={isSubmitting}
+                className={`px-3 py-1.5 border font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors cursor-pointer ${
+                  isSubmitting ? 'border-rule text-secondary bg-surface-container cursor-not-allowed' : 'border-primary-container text-primary-container hover:bg-primary-container/10'
+                }`}
               >
-                Save Rule
+                {isSubmitting ? 'Saving...' : 'Save Rule'}
               </button>
               <button
                 type="button"
                 onClick={handleTriggerProcurement}
-                disabled={toOrderQty <= 0}
-                className="px-3 py-1.5 bg-primary-container hover:bg-[#8E4217] text-white font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors disabled:opacity-40 cursor-pointer shadow-sm"
+                disabled={toOrderQty <= 0 || isSubmitting}
+                className={`px-3 py-1.5 font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors shadow-sm ${
+                  toOrderQty <= 0 || isSubmitting ? 'bg-surface-container text-secondary opacity-40 cursor-not-allowed' : 'bg-primary-container hover:bg-[#8E4217] text-white cursor-pointer'
+                }`}
               >
-                Procure Stock Now
+                {isSubmitting ? 'Procuring...' : 'Procure Stock Now'}
               </button>
             </div>
           </div>

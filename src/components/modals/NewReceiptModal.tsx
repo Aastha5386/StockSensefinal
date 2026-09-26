@@ -7,7 +7,8 @@ interface NewReceiptModalProps {
 }
 
 export const NewReceiptModal: React.FC<NewReceiptModalProps> = ({ onClose }) => {
-  const { addReceipt, products } = useApp();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { addReceipt, products, showToast } = useApp();
 
   const [refId, setRefId] = useState(`RCV-${new Date().getFullYear()}-${Math.floor(88420 + Math.random() * 900)}`);
   const [contact, setContact] = useState('');
@@ -18,44 +19,51 @@ export const NewReceiptModal: React.FC<NewReceiptModalProps> = ({ onClose }) => 
   const [selectedSku, setSelectedSku] = useState(products[0]?.sku || 'SKU-48201-AX');
   const [quantity, setQuantity] = useState(500);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contact.trim()) return;
 
-    const matchedProduct = products.find((p) => p.sku === selectedSku);
+    setIsSubmitting(true);
+    try {
+      const matchedProduct = products.find((p) => p.sku === selectedSku);
 
-    const newReceipt: Receipt = {
-      id: refId.trim().toUpperCase(),
-      reference: `WH/IN/000${Math.floor(10 + Math.random() * 90)}`,
-      contact: contact.trim(),
-      carrierCode: carrierCode.trim().toUpperCase(),
-      toLocation: toLocation.trim().toUpperCase(),
-      scheduledUtc: scheduledUtc.trim(),
-      status: status,
-      clearanceStatus: 'CUSTOMS CLEARED',
-      containerSeal: `#SEAL-${Math.floor(1000 + Math.random() * 9000)}-EU`,
-      inspectionLevel: 'TIER-2 PHYSICAL TALLY',
-      totalPieces: `${quantity} ASSORTED`,
-      tallyWeight: `${(quantity * 2.4).toFixed(0)} KG NET`,
-      items: [
-        {
-          product: matchedProduct?.name || 'Assorted Freight Materials',
-          spec: 'STANDARD INVENTORY CRATE',
-          sku: selectedSku,
-          unit: matchedProduct?.unit || 'PCS',
-          quantity: Number(quantity) || 1,
+      const newReceipt: Receipt = {
+        id: refId.trim().toUpperCase(),
+        reference: `WH/IN/000${Math.floor(10 + Math.random() * 90)}`,
+        contact: contact.trim(),
+        carrierCode: carrierCode.trim().toUpperCase(),
+        toLocation: toLocation.trim().toUpperCase(),
+        scheduledUtc: scheduledUtc.trim(),
+        status: status,
+        clearanceStatus: 'CUSTOMS CLEARED',
+        containerSeal: `#SEAL-${Math.floor(1000 + Math.random() * 9000)}-EU`,
+        inspectionLevel: 'TIER-2 PHYSICAL TALLY',
+        totalPieces: `${quantity} ASSORTED`,
+        tallyWeight: `${(quantity * 2.4).toFixed(0)} KG NET`,
+        items: [
+          {
+            product: matchedProduct?.name || 'Assorted Freight Materials',
+            spec: 'STANDARD INVENTORY CRATE',
+            sku: selectedSku,
+            unit: matchedProduct?.unit || 'PCS',
+            quantity: Number(quantity) || 1,
+          },
+        ],
+        receiverNotes: 'Inbound consignment registered via dock terminal protocol.',
+        custodialHandover: {
+          dispatchChief: 'A. LINDBERG',
+          terminalAuth: 'PASSED',
+          sealStatus: 'UNBROKEN',
         },
-      ],
-      receiverNotes: 'Inbound consignment registered via dock terminal protocol.',
-      custodialHandover: {
-        dispatchChief: 'A. LINDBERG',
-        terminalAuth: 'PASSED',
-        sealStatus: 'UNBROKEN',
-      },
-    };
+      };
 
-    addReceipt(newReceipt);
-    onClose();
+      await addReceipt(newReceipt);
+      onClose();
+    } catch (err: any) {
+      showToast(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -207,9 +215,12 @@ export const NewReceiptModal: React.FC<NewReceiptModalProps> = ({ onClose }) => 
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 bg-primary-container hover:bg-[#8E4217] text-white font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors"
+              disabled={isSubmitting}
+              className={`px-4 py-1.5 font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors ${
+                isSubmitting ? 'bg-surface-container text-secondary cursor-not-allowed' : 'bg-primary-container hover:bg-[#8E4217] text-white'
+              }`}
             >
-              Sign &amp; Inscribe Manifest
+              {isSubmitting ? 'Inscribing...' : 'Sign & Inscribe Manifest'}
             </button>
           </div>
         </form>

@@ -7,7 +7,8 @@ interface NewProductModalProps {
 }
 
 export const NewProductModal: React.FC<NewProductModalProps> = ({ onClose }) => {
-  const { addProduct } = useApp();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { addProduct, showToast } = useApp();
 
   const [sku, setSku] = useState(`SKU-${Math.floor(10000 + Math.random() * 90000)}-NX`);
   const [name, setName] = useState('');
@@ -17,22 +18,29 @@ export const NewProductModal: React.FC<NewProductModalProps> = ({ onClose }) => 
   const [freeToUse, setFreeToUse] = useState(90);
   const [location, setLocation] = useState('WH-A / RACK-14');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    const newProd: Product = {
-      sku: sku.trim().toUpperCase(),
-      name: name.trim(),
-      category: category.trim(),
-      unit: unit.trim().toUpperCase(),
-      onHand: Number(onHand) || 0,
-      freeToUse: Number(freeToUse) || 0,
-      location: location.trim(),
-    };
+    setIsSubmitting(true);
+    try {
+      const newProd: Product = {
+        sku: sku.trim().toUpperCase(),
+        name: name.trim(),
+        category: category.trim(),
+        unit: unit.trim().toUpperCase(),
+        onHand: Number(onHand) || 0,
+        freeToUse: Number(freeToUse) || 0,
+        location: location.trim(),
+      };
 
-    addProduct(newProd);
-    onClose();
+      await addProduct(newProd);
+      onClose();
+    } catch (err: any) {
+      showToast(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -166,9 +174,12 @@ export const NewProductModal: React.FC<NewProductModalProps> = ({ onClose }) => 
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 bg-primary-container hover:bg-[#8E4217] text-white font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors"
+              disabled={isSubmitting}
+              className={`px-4 py-1.5 font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors ${
+                isSubmitting ? 'bg-surface-container text-secondary cursor-not-allowed' : 'bg-primary-container hover:bg-[#8E4217] text-white'
+              }`}
             >
-              Commit SKU to Ledger
+              {isSubmitting ? 'Committing...' : 'Commit SKU to Ledger'}
             </button>
           </div>
         </form>

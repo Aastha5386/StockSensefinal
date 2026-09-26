@@ -33,40 +33,64 @@ export const TransfersView: React.FC = () => {
   const netVariancePct =
     systemSummation > 0 ? ((netVariance / systemSummation) * 100).toFixed(2) : '0.00';
 
-  const handleExecuteTransfer = (e: React.FormEvent) => {
+  const [isSubmittingMove, setIsSubmittingMove] = useState(false);
+  const [isSubmittingAdjustment, setIsSubmittingAdjustment] = useState(false);
+
+  const handleExecuteTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newMove: MoveRecord = {
-      reference: `MOV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      timestampUtc: `${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()} // ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} UTC`,
-      carrier: `Internal Transfer / ${carrierVehicle}`,
-      carrierTag: 'INT-CONV',
-      from: fromLoc,
-      to: toLoc,
-      quantity: '64 PALLET',
-      isPositive: true,
-      status: 'DONE',
-      kind: 'internal',
-    };
-    addMoveRecord(newMove);
-    showToast(`TRANSFER MANDATE EXECUTED: ${fromLoc} -> ${toLoc}`);
+    setIsSubmittingMove(true);
+    try {
+      const newMove: MoveRecord = {
+        reference: `MOV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        timestampUtc: `${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()} // ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} UTC`,
+        carrier: `Internal Transfer / ${carrierVehicle}`,
+        carrierTag: 'INT-CONV',
+        from: fromLoc,
+        to: toLoc,
+        quantity: '64 PALLET',
+        isPositive: true,
+        status: 'DONE',
+        kind: 'internal',
+      };
+      await addMoveRecord(newMove);
+      showToast(`TRANSFER MANDATE EXECUTED: ${fromLoc} -> ${toLoc}`);
+    } catch (err: any) {
+      showToast(err.message);
+    } finally {
+      setIsSubmittingMove(false);
+    }
   };
 
-  const handleAppendRow = () => {
-    const newItem: StockAdjustmentItem = {
-      id: `adj-${Date.now()}`,
-      sku: `SKU-${Math.floor(10000 + Math.random() * 90000)}-ST`,
-      name: 'Auxiliary Steel Banding 19mm',
-      spec: 'COIL CASING',
-      location: 'WH-B / RACK-03',
-      systemQuantity: 64,
-      countedQuantity: 64,
-    };
-    appendAdjustmentItem(newItem);
+  const handleAppendRow = async () => {
+    setIsSubmittingAdjustment(true);
+    try {
+      const newItem: StockAdjustmentItem = {
+        id: `adj-${Date.now()}`,
+        sku: `SKU-${Math.floor(10000 + Math.random() * 90000)}-ST`,
+        name: 'Auxiliary Steel Banding 19mm',
+        spec: 'COIL CASING',
+        location: 'WH-B / RACK-03',
+        systemQuantity: 64,
+        countedQuantity: 64,
+      };
+      await appendAdjustmentItem(newItem);
+    } catch (err: any) {
+      showToast(err.message);
+    } finally {
+      setIsSubmittingAdjustment(false);
+    }
   };
 
-  const handlePostRecord = () => {
-    postAdjustmentRecord(marshalNotes);
-    setMarshalNotes('');
+  const handlePostRecord = async () => {
+    setIsSubmittingAdjustment(true);
+    try {
+      await postAdjustmentRecord(marshalNotes);
+      setMarshalNotes('');
+    } catch (err: any) {
+      showToast(err.message);
+    } finally {
+      setIsSubmittingAdjustment(false);
+    }
   };
 
   return (
@@ -312,12 +336,15 @@ export const TransfersView: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 border border-on-surface text-on-surface hover:bg-on-surface hover:text-surface font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                    disabled={isSubmittingMove}
+                    className={`px-5 py-2 border font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
+                      isSubmittingMove ? 'border-rule text-secondary bg-surface-container cursor-not-allowed' : 'border-on-surface text-on-surface hover:bg-on-surface hover:text-surface'
+                    }`}
                   >
                     <span className="material-symbols-outlined text-[16px]">
                       send_time_extension
                     </span>
-                    <span>Execute Transfer</span>
+                    <span>{isSubmittingMove ? 'Executing...' : 'Execute Transfer'}</span>
                   </button>
                 </div>
               </div>
@@ -348,7 +375,10 @@ export const TransfersView: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleAppendRow}
-                  className="px-3 py-1.5 border border-rule bg-surface hover:bg-surface-container text-tertiary hover:text-on-surface font-label-sm text-label-sm uppercase tracking-wider transition-colors flex items-center gap-1 cursor-pointer"
+                  disabled={isSubmittingAdjustment}
+                  className={`px-3 py-1.5 border font-label-sm text-label-sm uppercase tracking-wider transition-colors flex items-center gap-1 ${
+                    isSubmittingAdjustment ? 'border-rule bg-surface text-tertiary opacity-50 cursor-not-allowed' : 'border-rule bg-surface hover:bg-surface-container text-tertiary hover:text-on-surface cursor-pointer'
+                  }`}
                 >
                   <span className="material-symbols-outlined text-[14px]">add</span>
                   <span>Append SKU Line</span>
@@ -356,10 +386,13 @@ export const TransfersView: React.FC = () => {
                 <button
                   type="button"
                   onClick={handlePostRecord}
-                  className="px-4 py-2 bg-primary-container hover:bg-[#8E4217] text-white font-label-lg text-label-lg uppercase tracking-wider transition-colors rounded-[2px] flex items-center gap-2 cursor-pointer font-semibold"
+                  disabled={isSubmittingAdjustment}
+                  className={`px-4 py-2 text-white font-label-lg text-label-lg uppercase tracking-wider transition-colors rounded-[2px] flex items-center gap-2 font-semibold ${
+                    isSubmittingAdjustment ? 'bg-surface-container text-secondary cursor-not-allowed' : 'bg-primary-container hover:bg-[#8E4217] cursor-pointer'
+                  }`}
                 >
                   <span className="material-symbols-outlined text-[16px]">verified</span>
-                  <span>Post Adjustment Record</span>
+                  <span>{isSubmittingAdjustment ? 'Posting...' : 'Post Adjustment Record'}</span>
                 </button>
               </div>
             </div>
@@ -533,9 +566,12 @@ export const TransfersView: React.FC = () => {
                 <button
                   type="button"
                   onClick={handlePostRecord}
-                  className="w-full md:w-auto px-5 py-2.5 bg-primary-container hover:bg-[#8E4217] text-white font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors select-none text-center cursor-pointer"
+                  disabled={isSubmittingAdjustment}
+                  className={`w-full md:w-auto px-5 py-2.5 font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors select-none text-center ${
+                    isSubmittingAdjustment ? 'bg-surface-container text-secondary cursor-not-allowed' : 'bg-primary-container hover:bg-[#8E4217] text-white cursor-pointer'
+                  }`}
                 >
-                  Post Adjustment Record
+                  {isSubmittingAdjustment ? 'Posting...' : 'Post Adjustment Record'}
                 </button>
               </div>
             </div>

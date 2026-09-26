@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 
 export const ReceiptDetailView: React.FC = () => {
-  const { receipts, selectedReceiptId, validateReceipt } = useApp();
+  const { receipts, selectedReceiptId, validateReceipt, showToast } = useApp();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isValidating, setIsValidating] = useState(false);
 
   const receipt =
     (id ? receipts.find((r) => r.id === id) : null) ||
@@ -26,6 +27,17 @@ export const ReceiptDetailView: React.FC = () => {
     };
 
   const isDone = receipt.status === 'DONE';
+
+  const handleValidate = async () => {
+    setIsValidating(true);
+    try {
+      await validateReceipt(receipt.id);
+    } catch (err: any) {
+      showToast(err.message);
+    } finally {
+      setIsValidating(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-6xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-6">
@@ -78,17 +90,20 @@ export const ReceiptDetailView: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => validateReceipt(receipt.id)}
+              disabled={isDone || isValidating}
+              onClick={handleValidate}
               className={`px-5 py-2 font-label-md text-label-md uppercase tracking-wider rounded-[2px] transition-colors flex items-center gap-2 cursor-pointer select-none shadow-none font-semibold ${
                 isDone
                   ? 'bg-tertiary-container text-white cursor-default'
+                  : isValidating
+                  ? 'bg-surface-container text-secondary cursor-not-allowed'
                   : 'bg-primary-container hover:bg-[#8E4217] text-white'
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">
                 {isDone ? 'verified' : 'check_circle'}
               </span>
-              <span>{isDone ? 'VALIDATED' : 'VALIDATE'}</span>
+              <span>{isValidating ? 'VALIDATING...' : isDone ? 'VALIDATED' : 'VALIDATE'}</span>
             </button>
           </div>
         </div>

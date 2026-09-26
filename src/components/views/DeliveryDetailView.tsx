@@ -1,10 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 
 export const DeliveryDetailView: React.FC = () => {
-  const { delivery, toggleDeliveryChecklist, validateDelivery } = useApp();
+  const { delivery, toggleDeliveryChecklist, validateDelivery, showToast } = useApp();
   const navigate = useNavigate();
+
+  const [isValidating, setIsValidating] = useState(false);
+  const [isTogglingPick, setIsTogglingPick] = useState(false);
+  const [isTogglingPack, setIsTogglingPack] = useState(false);
+
+  const handleValidate = async () => {
+    setIsValidating(true);
+    try {
+      await validateDelivery();
+    } catch (err: any) {
+      showToast(err.message);
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleToggle = async (field: 'pick' | 'pack') => {
+    field === 'pick' ? setIsTogglingPick(true) : setIsTogglingPack(true);
+    try {
+      await toggleDeliveryChecklist(field);
+    } catch (err: any) {
+      showToast(err.message);
+    } finally {
+      field === 'pick' ? setIsTogglingPick(false) : setIsTogglingPack(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-6xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-6">
@@ -52,11 +78,20 @@ export const DeliveryDetailView: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={validateDelivery}
-            className="px-5 py-2 bg-primary-container text-white font-label-md text-label-md tracking-wider font-semibold rounded-none border border-primary-container hover:bg-[#8E4217] transition-colors duration-150 flex items-center gap-2 cursor-pointer select-none shadow-none"
+            disabled={delivery?.status === 'DONE' || isValidating}
+            onClick={handleValidate}
+            className={`px-5 py-2 font-label-md text-label-md tracking-wider font-semibold rounded-none border transition-colors duration-150 flex items-center gap-2 cursor-pointer select-none shadow-none ${
+              delivery?.status === 'DONE'
+                ? 'bg-tertiary-container border-tertiary-container text-white cursor-default'
+                : isValidating
+                ? 'bg-surface-container border-rule text-secondary cursor-not-allowed'
+                : 'bg-primary-container border-primary-container text-white hover:bg-[#8E4217]'
+            }`}
           >
-            <span className="material-symbols-outlined text-[16px]">check_circle</span>
-            <span>{delivery?.status === 'DONE' ? 'DISPATCHED' : 'VALIDATE'}</span>
+            <span className="material-symbols-outlined text-[16px]">
+              {delivery?.status === 'DONE' ? 'verified' : 'check_circle'}
+            </span>
+            <span>{isValidating ? 'VALIDATING...' : delivery?.status === 'DONE' ? 'DISPATCHED' : 'VALIDATE'}</span>
           </button>
         </div>
       </div>
@@ -119,11 +154,12 @@ export const DeliveryDetailView: React.FC = () => {
         </div>
         <div className="flex flex-col gap-3.5">
           {/* Checklist Item 1 */}
-          <label className="flex items-center group cursor-pointer select-none">
+          <label className={`flex items-center group select-none ${isTogglingPick ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
             <input
               type="checkbox"
+              disabled={isTogglingPick}
               checked={delivery?.pickVerified || false}
-              onChange={() => toggleDeliveryChecklist('pick')}
+              onChange={() => handleToggle('pick')}
               className="sr-only peer"
             />
             <span className="w-4 h-4 border border-on-surface bg-surface peer-checked:bg-on-surface flex items-center justify-center mr-3 transition-colors duration-100 shrink-0">
@@ -146,11 +182,12 @@ export const DeliveryDetailView: React.FC = () => {
           </label>
 
           {/* Checklist Item 2 */}
-          <label className="flex items-center group cursor-pointer select-none">
+          <label className={`flex items-center group select-none ${isTogglingPack ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
             <input
               type="checkbox"
+              disabled={isTogglingPack}
               checked={delivery?.packInspected || false}
-              onChange={() => toggleDeliveryChecklist('pack')}
+              onChange={() => handleToggle('pack')}
               className="sr-only peer"
             />
             <span className="w-4 h-4 border border-on-surface bg-surface peer-checked:bg-on-surface flex items-center justify-center mr-3 transition-colors duration-100 shrink-0">
