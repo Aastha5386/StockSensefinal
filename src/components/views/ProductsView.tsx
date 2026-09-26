@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Product } from '../../types';
 import { NewProductModal } from '../modals/NewProductModal';
+import { EditProductModal } from '../modals/EditProductModal';
 
 export const ProductsView: React.FC = () => {
   const { products, exportCsv, showToast } = useApp();
@@ -9,6 +10,7 @@ export const ProductsView: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showNewProductModal, setShowNewProductModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -206,13 +208,22 @@ export const ProductsView: React.FC = () => {
                     {p.freeToUse.toLocaleString()}
                   </td>
                   <td className="py-2.5 px-2 text-center">
-                    <button
-                      onClick={() => showToast(`INSPECTION LOG VIEWED: ${p.sku}`)}
-                      className="text-secondary hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer p-1"
-                      title="Inspect SKU Ledger"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">more_vert</span>
-                    </button>
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        onClick={() => setEditingProduct(p)}
+                        className="text-secondary hover:text-primary-container transition-colors cursor-pointer p-1 rounded-[2px]"
+                        title="Edit / Update Product SKU"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                      </button>
+                      <button
+                        onClick={() => showToast(`INSPECTION LOG VIEWED: ${p.sku}`)}
+                        className="text-secondary hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer p-1"
+                        title="Inspect SKU Ledger"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">more_vert</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -305,6 +316,11 @@ export const ProductsView: React.FC = () => {
       {/* New Product Modal */}
       {showNewProductModal && (
         <NewProductModal onClose={() => setShowNewProductModal(false)} />
+      )}
+
+      {/* Edit Product Modal */}
+      {editingProduct && (
+        <EditProductModal product={editingProduct} onClose={() => setEditingProduct(null)} />
       )}
     </div>
   );

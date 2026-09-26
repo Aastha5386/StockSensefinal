@@ -45,6 +45,7 @@ interface AppContextType {
 
   products: Product[];
   addProduct: (product: Product) => void;
+  updateProduct: (sku: string, updatedProduct: Product) => void;
 
   receipts: Receipt[];
   addReceipt: (receipt: Receipt) => void;
@@ -277,6 +278,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast(`SKU INSCRIBED TO CATALOG: ${product.sku}`);
   };
 
+  const updateProduct = (sku: string, updatedProduct: Product) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.sku === sku ? { ...p, ...updatedProduct } : p))
+    );
+    showToast(`SKU REVISED IN CATALOG: ${sku}`);
+  };
+
   const addReceipt = (receipt: Receipt) => {
     setReceipts((prev) => [receipt, ...prev]);
     showToast(`INBOUND MANIFEST REGISTERED: ${receipt.id}`);
@@ -501,6 +509,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateProfile,
         products,
         addProduct,
+        updateProduct,
         receipts,
         addReceipt,
         updateReceiptStatus,
