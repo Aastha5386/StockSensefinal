@@ -1,15 +1,17 @@
 import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { useNavigate } from 'react-router-dom';
 
 export const ReceiptDetailView: React.FC = () => {
   const { receipts, selectedReceiptId, validateReceipt } = useApp();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const receipt =
+    (id ? receipts.find((r) => r.id === id) : null) ||
     receipts.find((r) => r.id === selectedReceiptId) ||
     receipts[0] || {
-      id: 'RCV-2023-88401',
+      id: id || 'RCV-2023-88401',
       reference: 'WH/IN/0001',
       contact: 'Nordic Freight Logistics // OSLO-EXP',
       toLocation: 'BAY-02 / NORTH DOCK',

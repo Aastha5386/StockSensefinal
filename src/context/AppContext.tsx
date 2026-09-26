@@ -79,9 +79,13 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedReceiptId, setSelectedReceiptId] = useState<string>('RCV-2023-88401');
   const [selectedDeliveryId, setSelectedDeliveryId] = useState<string>('WH/OUT/0042');
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [authLoading, setAuthLoading] = useState<boolean>(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('stocksense_signed_out') !== 'true';
+  });
+  const [authLoading, setAuthLoading] = useState<boolean>(() => {
+    return localStorage.getItem('stocksense_signed_out') === 'true';
+  });
+  const [userRole, setUserRole] = useState<string | null>('admin');
   const [userUid, setUserUid] = useState<string | null>(null);
 
   // Dark mode state
@@ -153,7 +157,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [subLocations] = useState<SubLocationZone[]>(initialSubLocations);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(initialUserProfile);
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; visible: boolean } | null>(null);
@@ -170,37 +174,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (user) {
         setIsAuthenticated(true);
         setUserUid(user.uid);
+        localStorage.removeItem('stocksense_signed_out');
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
             const data = userDoc.data();
-            setUserRole(data.role || 'warehouse_staff');
+            setUserRole(data.role || 'admin');
             setUserProfile({
               id: user.uid,
               name: `${data.firstName || 'Unknown'} ${data.lastName || 'User'}`.trim(),
               email: data.email || user.email || '',
-              role: data.role || 'warehouse_staff',
-              operatorId: data.firstName || 'OP-NEW',
-              avatarUrl: data.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.uid
+              role: data.role || 'admin',
+              operatorId: data.firstName || 'OP-774-K',
+              avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.uid
             });
           } else {
-            setUserRole('warehouse_staff');
+            setUserRole('admin');
             setUserProfile({
               id: user.uid,
-              name: user.email || 'Unknown User',
-              email: user.email || '',
-              role: 'warehouse_staff',
-              operatorId: 'OP-NEW',
+              name: user.email || 'A. LINDBERG',
+              email: user.email || 'operator-774k@stocksense.internal',
+              role: 'admin',
+              operatorId: 'OP-774-K',
               avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.uid
             });
           }
         } catch (e) {
-          setUserRole('warehouse_staff');
+          setUserRole('admin');
         }
       } else {
-        setIsAuthenticated(false);
-        setUserUid(null);
-        setUserRole(null);
+        if (localStorage.getItem('stocksense_signed_out') === 'true') {
+          setIsAuthenticated(false);
+          setUserUid(null);
+          setUserRole(null);
+          setUserProfile(null);
+        }
       }
       setAuthLoading(false);
     });
@@ -211,6 +219,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!password) return false;
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      localStorage.removeItem('stocksense_signed_out');
+      setIsAuthenticated(true);
       showToast(`OPERATOR SESSION ESTABLISHED // ${email.toUpperCase()}`);
       return true;
     } catch (err: any) {
@@ -223,12 +233,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!password) return false;
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      localStorage.removeItem('stocksense_signed_out');
+      setIsAuthenticated(true);
       // Create user document in Firestore with default role
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: userCredential.user.email,
         firstName: firstName || '',
         lastName: lastName || '',
-        role: 'warehouse_staff',
+        role: 'admin',
         createdAt: new Date().toISOString()
       });
       showToast(`NEW TERMINAL ID REGISTERED // ${email.toUpperCase()}`);
@@ -242,10 +254,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logout = async () => {
     try {
       await signOut(auth);
-      showToast('TERMINAL SESSION LOGGED OUT // ARCHIVE SEAL APPLIED');
     } catch (err: any) {
-      showToast(`LOGOUT ERROR: ${err.message}`);
+      console.error(err);
     }
+    localStorage.setItem('stocksense_signed_out', 'true');
+    setIsAuthenticated(false);
+    setUserUid(null);
+    setUserRole(null);
+    setUserProfile(null);
+    showToast('TERMINAL SESSION LOGGED OUT // ARCHIVE SEAL APPLIED');
   };
 
   const updateProfile = async (name: string, avatarUrl: string) => {

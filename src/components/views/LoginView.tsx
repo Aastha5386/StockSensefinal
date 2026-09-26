@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { ASSET_IMAGES } from '../../data/initialData';
 import { signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail } from 'firebase/auth';
@@ -7,6 +8,9 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export const LoginView: React.FC = () => {
   const { login, register, isDarkMode, toggleDarkMode, showToast } = useApp();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
   const [email, setEmail] = useState('operator@stocksense.internal');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -35,9 +39,11 @@ export const LoginView: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isRegisterMode) {
-      await register(email, password, firstName, lastName);
+      const ok = await register(email, password, firstName, lastName);
+      if (ok) navigate(from, { replace: true });
     } else {
-      await login(email, password);
+      const ok = await login(email, password);
+      if (ok) navigate(from, { replace: true });
     }
   };
 
@@ -190,6 +196,7 @@ export const LoginView: React.FC = () => {
                             createdAt: new Date().toISOString()
                           });
                         }
+                        navigate(from, { replace: true });
                       } catch (error) {
                         showToast("INVALID VERIFICATION CODE: Please check SMS code.");
                       }
@@ -318,6 +325,7 @@ export const LoginView: React.FC = () => {
                           createdAt: new Date().toISOString()
                         });
                       }
+                      navigate(from, { replace: true });
                     } catch (e) {
                       console.error(e);
                     }

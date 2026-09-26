@@ -14,31 +14,36 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileO
   const location = useLocation();
 
   const navItems = [
-    { screen: '/dashboard', title: 'Dashboard', icon: 'dashboard' },
-    { screen: '/products', title: 'Product Catalog', icon: 'inventory_2' },
-    { screen: '/receipts', title: 'Receipts Management', icon: 'receipt_long' },
-    { screen: '/transfers', title: 'Transfers & Outbound', icon: 'sync_alt' },
-    { screen: '/move-history', title: 'Stock Move History', icon: 'history' },
+    { path: '/dashboard', title: 'Dashboard', icon: 'dashboard' },
+    { path: '/products', title: 'Product Catalog', icon: 'inventory_2' },
+    { path: '/receipts', title: 'Receipts Management', icon: 'receipt_long' },
+    { path: '/transfers', title: 'Transfers & Outbound', icon: 'sync_alt' },
+    { path: '/move-history', title: 'Stock Move History', icon: 'history' },
   ];
 
   const bottomItems = [];
   if (userRole !== 'warehouse_staff') {
-    bottomItems.push({ screen: '/settings', title: 'System Settings', icon: 'tune' });
+    bottomItems.push({ path: '/settings', title: 'System Settings', icon: 'tune' });
   }
   if (userRole === 'admin') {
-    bottomItems.push({ screen: '/settings-users', title: 'User Management', icon: 'manage_accounts' });
+    bottomItems.push({ path: '/settings-users', title: 'User Management', icon: 'manage_accounts' });
   }
-  bottomItems.push({ screen: '/profile-station', title: 'Profile Station', icon: 'account_circle' });
+  bottomItems.push({ path: '/profile-station', title: 'Profile Station', icon: 'account_circle' });
 
-  const handleNav = (screen: string) => {
-    navigate(screen);
+  const handleNav = (path: string) => {
+    navigate(path);
     if (setMobileOpen) setMobileOpen(false);
   };
 
-  const isActive = (screen: string) => {
-    if (location.pathname === screen) return true;
-    if (screen === '/receipts' && location.pathname.startsWith('/receipts/')) return true;
-    if (screen === '/transfers' && location.pathname.startsWith('/deliveries/')) return true;
+  const isActive = (path: string) => {
+    const currentPath = location.pathname;
+    if (currentPath === path) return true;
+    if (path === '/receipts' && (currentPath.startsWith('/receipts') || currentPath === '/receipt-detail' || currentPath === '/suppliers')) return true;
+    if (path === '/transfers' && (currentPath.startsWith('/deliveries') || currentPath === '/delivery-detail')) return true;
+    if (path === '/move-history' && currentPath === '/reports') return true;
+    if (path === '/settings' && currentPath === '/settings') return true;
+    if (path === '/settings-users' && (currentPath === '/settings-users' || currentPath === '/settings/users')) return true;
+    if (path === '/profile-station' && (currentPath === '/profile-station' || currentPath === '/profile')) return true;
     return false;
   };
 
@@ -73,11 +78,11 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileO
           {/* Primary Navigation Items */}
           <nav className="flex flex-col items-start w-full gap-1.5" aria-label="Primary Navigation">
             {navItems.map((item) => {
-              const active = isActive(item.screen);
+              const active = isActive(item.path);
               return (
                 <button
-                  key={item.screen}
-                  onClick={() => handleNav(item.screen)}
+                  key={item.path}
+                  onClick={() => handleNav(item.path)}
                   className={`flex items-center gap-3.5 w-full h-10 px-2.5 transition-all duration-150 rounded-[2px] cursor-pointer whitespace-nowrap ${
                     active
                       ? 'bg-primary-container text-white border-l-2 border-[#ffb693] shadow-sm font-medium'
@@ -102,11 +107,11 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileO
           <div className="w-full h-[1px] bg-white/15" />
           <nav className="flex flex-col items-start w-full gap-1.5" aria-label="System Settings">
             {bottomItems.map((item) => {
-              const active = isActive(item.screen);
+              const active = isActive(item.path);
               return (
                 <button
-                  key={item.screen}
-                  onClick={() => handleNav(item.screen)}
+                  key={item.path}
+                  onClick={() => handleNav(item.path)}
                   className={`flex items-center gap-3.5 w-full h-10 px-2.5 transition-all duration-150 rounded-[2px] cursor-pointer whitespace-nowrap ${
                     active
                       ? 'bg-primary-container text-white border-l-2 border-[#ffb693] shadow-sm font-medium'
@@ -164,11 +169,11 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileO
                   MAIN MENU
                 </div>
                 {navItems.map((item) => {
-                  const active = isActive(item.screen);
+                  const active = isActive(item.path);
                   return (
                     <button
-                      key={item.screen}
-                      onClick={() => handleNav(item.screen)}
+                      key={item.path}
+                      onClick={() => handleNav(item.path)}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 text-left font-label-md text-label-md uppercase tracking-wider transition-colors rounded-[2px] ${
                         active
                           ? 'bg-primary-container text-white font-semibold'
@@ -188,11 +193,11 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileO
                 SYSTEM
               </div>
               {bottomItems.map((item) => {
-                const active = isActive(item.screen);
+                const active = isActive(item.path);
                 return (
                   <button
-                    key={item.screen}
-                    onClick={() => handleNav(item.screen)}
+                    key={item.path}
+                    onClick={() => handleNav(item.path)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-left font-label-md text-label-md uppercase tracking-wider transition-colors rounded-[2px] ${
                       active
                         ? 'bg-primary-container text-white font-semibold'

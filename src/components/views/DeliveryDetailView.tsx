@@ -1,6 +1,6 @@
 import React from 'react';
-import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 
 export const DeliveryDetailView: React.FC = () => {
   const { delivery, toggleDeliveryChecklist, validateDelivery } = useApp();

@@ -148,9 +148,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onToggleMobileMenu }) => {
                 <div className="h-[1px] w-full bg-rule my-1" />
 
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     setProfileOpen(false);
-                    logout();
+                    await logout();
+                    navigate('/login');
                   }}
                   className="flex items-center gap-2.5 px-3 py-2 text-error hover:bg-error-container/20 transition-colors text-left"
                 >

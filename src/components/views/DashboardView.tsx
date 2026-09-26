@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 
 export const DashboardView: React.FC = () => {
   const { setSelectedReceiptId, products, receipts, delivery, moveRecords, adjustmentItems } = useApp();
@@ -67,7 +67,7 @@ export const DashboardView: React.FC = () => {
         time: r.scheduledUtc || '09:30 UTC',
         onClick: () => {
           setSelectedReceiptId(r.id);
-          navigate(`/receipts/${r.id}`);
+          navigate(`/receipts/${encodeURIComponent(r.id)}`);
         },
       });
     });
@@ -84,7 +84,7 @@ export const DashboardView: React.FC = () => {
         category: 'Fasteners',
         status: delivery.status,
         time: delivery.timestampUtc || '08:15 UTC',
-        onClick: () => navigate('/deliveries'),
+        onClick: () => navigate('/delivery-detail'),
       });
     }
 
@@ -122,7 +122,7 @@ export const DashboardView: React.FC = () => {
     }
 
     return list;
-  }, [receipts, delivery, moveRecords, adjustmentItems, setSelectedReceiptId, navigate]);
+  }, [receipts, delivery, moveRecords, adjustmentItems, navigate, setSelectedReceiptId]);
 
   // Filter compiled operations based on Dynamic Filter Bar
   const filteredOperations = useMemo(() => {
@@ -233,7 +233,7 @@ export const DashboardView: React.FC = () => {
 
           {/* Column 4: Pending Deliveries */}
           <div
-            onClick={() => navigate('/deliveries')}
+            onClick={() => navigate('/delivery-detail')}
             className="flex flex-col p-5 border-r border-rule cursor-pointer hover:bg-surface-container transition-colors group"
           >
             <span className="font-label-md text-label-md text-tertiary mb-3 uppercase tracking-wider group-hover:text-on-surface">

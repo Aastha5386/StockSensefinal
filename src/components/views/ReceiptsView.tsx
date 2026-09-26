@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { OperationalStatus, Receipt } from '../../types';
 import { NewReceiptModal } from '../modals/NewReceiptModal';
@@ -40,7 +40,7 @@ export const ReceiptsView: React.FC = () => {
 
   const handleRowClick = (receipt: Receipt) => {
     setSelectedReceiptId(receipt.id);
-    navigate(`/receipts/${receipt.id}`);
+    navigate(`/receipts/${encodeURIComponent(receipt.id)}`);
   };
 
   const handleToggleSelectAll = () => {

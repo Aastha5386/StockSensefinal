@@ -3,11 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
-import { SidebarRail } from './components/layout/SidebarRail';
-import { HeaderBar } from './components/layout/HeaderBar';
+import { AppLayout } from './components/layout/AppLayout';
 import { ToastNotification } from './components/common/ToastNotification';
 
 // Screen Views
@@ -22,25 +21,10 @@ import { MoveHistoryView } from './components/views/MoveHistoryView';
 import { SettingsView } from './components/views/SettingsView';
 import { ProfileStationView } from './components/views/ProfileStationView';
 import { AdminUsersView } from './components/views/AdminUsersView';
+import { NotFoundView } from './components/views/NotFoundView';
 
-const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  return (
-    <div className="min-h-screen bg-surface text-on-surface antialiased flex flex-col selection:bg-primary-container selection:text-white">
-      <SidebarRail mobileOpen={mobileMenuOpen} setMobileOpen={setMobileMenuOpen} />
-      <div className="flex-1 flex flex-col md:pl-14">
-        <HeaderBar onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
-        <main className="relative pt-14 w-full min-h-screen bg-surface transition-colors">
-          {children}
-        </main>
-      </div>
-      <ToastNotification />
-    </div>
-  );
-};
-
-const AuthGuard: React.FC<{ children: React.ReactNode, requireAdmin?: boolean }> = ({ children, requireAdmin }) => {
-  const { isAuthenticated, authLoading, userRole } = useApp();
+const ProtectedRoute: React.FC = () => {
+  const { isAuthenticated, authLoading } = useApp();
   const location = useLocation();
 
   if (authLoading) {
@@ -54,16 +38,14 @@ const AuthGuard: React.FC<{ children: React.ReactNode, requireAdmin?: boolean }>
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-  
-  if (requireAdmin && userRole !== 'admin') {
-    return <Navigate to="/dashboard" replace />;
-  }
 
-  return <>{children}</>;
+  return <Outlet />;
 };
 
-const MainAppContent: React.FC = () => {
+const LoginRoute: React.FC = () => {
   const { isAuthenticated, authLoading } = useApp();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
 
   if (authLoading) {
     return (
@@ -73,27 +55,58 @@ const MainAppContent: React.FC = () => {
     );
   }
 
+  if (isAuthenticated) {
+    return <Navigate to={from} replace />;
+  }
+
+  return (
+    <>
+      <LoginView />
+      <ToastNotification />
+    </>
+  );
+};
+
+const SettingsRoute: React.FC = () => {
+  const { userRole } = useApp();
+  return userRole === 'warehouse_staff' ? <Navigate to="/dashboard" replace /> : <SettingsView />;
+};
+
+const AdminUsersRoute: React.FC = () => {
+  const { userRole } = useApp();
+  return userRole === 'admin' ? <AdminUsersView /> : <Navigate to="/dashboard" replace />;
+};
+
+export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      <Route path="/login" element={
-        isAuthenticated ? <Navigate to="/dashboard" replace /> : 
-        <><LoginView /><ToastNotification /></>
-      } />
-      
-      <Route path="/" element={<AuthGuard><MainLayout><DashboardView /></MainLayout></AuthGuard>} />
-      <Route path="/dashboard" element={<AuthGuard><MainLayout><DashboardView /></MainLayout></AuthGuard>} />
-      <Route path="/products" element={<AuthGuard><MainLayout><ProductsView /></MainLayout></AuthGuard>} />
-      <Route path="/receipts" element={<AuthGuard><MainLayout><ReceiptsView /></MainLayout></AuthGuard>} />
-      <Route path="/receipts/:id" element={<AuthGuard><MainLayout><ReceiptDetailView /></MainLayout></AuthGuard>} />
-      <Route path="/deliveries" element={<AuthGuard><MainLayout><DeliveryDetailView /></MainLayout></AuthGuard>} />
-      <Route path="/transfers" element={<AuthGuard><MainLayout><TransfersView /></MainLayout></AuthGuard>} />
-      <Route path="/move-history" element={<AuthGuard><MainLayout><MoveHistoryView /></MainLayout></AuthGuard>} />
-      <Route path="/profile-station" element={<AuthGuard><MainLayout><ProfileStationView /></MainLayout></AuthGuard>} />
-      
-      <Route path="/settings" element={<AuthGuard requireAdmin><MainLayout><SettingsView /></MainLayout></AuthGuard>} />
-      <Route path="/settings-users" element={<AuthGuard requireAdmin><MainLayout><AdminUsersView /></MainLayout></AuthGuard>} />
-      
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/login" element={<LoginRoute />} />
+
+      {/* Protected Application Routes with AppLayout Shell */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<DashboardView />} />
+          <Route path="/products" element={<ProductsView />} />
+          <Route path="/receipts" element={<ReceiptsView />} />
+          <Route path="/receipts/:id" element={<ReceiptDetailView />} />
+          <Route path="/receipt-detail" element={<ReceiptDetailView />} />
+          <Route path="/transfers" element={<TransfersView />} />
+          <Route path="/delivery-detail" element={<DeliveryDetailView />} />
+          <Route path="/deliveries/:id" element={<DeliveryDetailView />} />
+          <Route path="/move-history" element={<MoveHistoryView />} />
+          <Route path="/reports" element={<MoveHistoryView />} />
+          <Route path="/suppliers" element={<ReceiptsView />} />
+          <Route path="/settings" element={<SettingsRoute />} />
+          <Route path="/settings-users" element={<AdminUsersRoute />} />
+          <Route path="/settings/users" element={<AdminUsersRoute />} />
+          <Route path="/profile-station" element={<ProfileStationView />} />
+          <Route path="/profile" element={<ProfileStationView />} />
+        </Route>
+      </Route>
+
+      {/* 404 Unknown Routes */}
+      <Route path="*" element={<NotFoundView />} />
     </Routes>
   );
 };
@@ -102,7 +115,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppProvider>
-        <MainAppContent />
+        <AppRoutes />
       </AppProvider>
     </BrowserRouter>
   );
