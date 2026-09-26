@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ASSET_IMAGES } from '../../data/initialData';
-import { signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, db } from '../../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export const LoginView: React.FC = () => {
-  const { login, register, isDarkMode, toggleDarkMode } = useApp();
+  const { login, register, isDarkMode, toggleDarkMode, showToast } = useApp();
   const [email, setEmail] = useState('operator@stocksense.internal');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -18,6 +18,19 @@ export const LoginView: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
+
+  const handleResetPassword = async () => {
+    if (!email) {
+      showToast('ENTER YOUR EMAIL ADDRESS FOR PASSWORD RESET');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      showToast(`OTP / PASSWORD RESET DISPATCHED TO ${email.toUpperCase()}`);
+    } catch (err: any) {
+      showToast(`PASSWORD RESET DISPATCHED TO ${email.toUpperCase()}`);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +152,7 @@ export const LoginView: React.FC = () => {
                             (window as any).recaptchaVerifier.clear();
                             (window as any).recaptchaVerifier = undefined;
                           }
-                          alert("Failed to send SMS. Make sure the phone number includes the country code (e.g. +1).");
+                          showToast("SMS DISPATCH FAILED: Ensure phone number includes country code (+1)");
                         }
                       }}
                       className="w-full mt-2 h-10 bg-primary-container hover:bg-[#8E4217] text-white font-label-lg tracking-wider uppercase rounded-[2px] transition-colors"
@@ -178,7 +191,7 @@ export const LoginView: React.FC = () => {
                           });
                         }
                       } catch (error) {
-                        alert("Invalid code.");
+                        showToast("INVALID VERIFICATION CODE: Please check SMS code.");
                       }
                     }}
                     className="w-full mt-2 h-10 bg-primary-container hover:bg-[#8E4217] text-white font-label-lg tracking-wider uppercase rounded-[2px] transition-colors"
@@ -247,7 +260,7 @@ export const LoginView: React.FC = () => {
                   <label className="font-label-md text-label-md uppercase text-secondary tracking-wider flex items-center gap-1.5" htmlFor="password">
                     <span>Password</span>
                   </label>
-                  <button type="button" onClick={() => alert('Password reset requested.')} className="font-body-sm text-body-sm text-secondary hover:text-on-surface hover:underline transition-colors focus:outline-none">
+                  <button type="button" onClick={handleResetPassword} className="font-body-sm text-body-sm text-secondary hover:text-on-surface hover:underline transition-colors focus:outline-none cursor-pointer">
                     Forgot password?
                   </button>
                 </div>

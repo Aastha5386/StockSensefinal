@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 
 export const DashboardView: React.FC = () => {
-  const { setSelectedReceiptId, products, receipts, delivery, moveRecords } = useApp();
+  const { setSelectedReceiptId, products, receipts, delivery, moveRecords, adjustmentItems } = useApp();
   const navigate = useNavigate();
   const [utcTime, setUtcTime] = useState<string>('');
+
+  // Dynamic Filters State
+  const [filterDocType, setFilterDocType] = useState<string>('ALL');
+  const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  const [filterLocation, setFilterLocation] = useState<string>('ALL');
+  const [filterCategory, setFilterCategory] = useState<string>('ALL');
+  const [filterSearch, setFilterSearch] = useState<string>('');
 
   useEffect(() => {
     const updateTime = () => {
@@ -30,6 +37,124 @@ export const DashboardView: React.FC = () => {
   const pendingDeliveriesCount = delivery?.status !== 'DONE' ? 1 : 0;
   const lowStockCount = products?.filter(p => p.onHand <= (p.minThreshold || 0)).length || 0;
   const scheduledTransfersCount = Math.max(1, moveRecords?.filter(m => m.kind === 'internal').length || 4);
+
+  // Compile Unified Active Operations List for Dynamic Filtering
+  const compiledOperations = useMemo(() => {
+    const list: Array<{
+      id: string;
+      docType: 'RECEIPTS' | 'DELIVERY' | 'INTERNAL' | 'ADJUSTMENT';
+      docTypeLabel: string;
+      reference: string;
+      contact: string;
+      location: string;
+      category: string;
+      status: string;
+      time: string;
+      onClick: () => void;
+    }> = [];
+
+    // Add Receipts
+    receipts.forEach((r) => {
+      list.push({
+        id: r.id,
+        docType: 'RECEIPTS',
+        docTypeLabel: 'Receipts',
+        reference: r.reference,
+        contact: r.contact,
+        location: r.toLocation || 'WH-A / RACK-14',
+        category: r.items?.[0] ? 'Raw Materials' : 'General',
+        status: r.status,
+        time: r.scheduledUtc || '09:30 UTC',
+        onClick: () => {
+          setSelectedReceiptId(r.id);
+          navigate(`/receipts/${r.id}`);
+        },
+      });
+    });
+
+    // Add Outbound Delivery
+    if (delivery) {
+      list.push({
+        id: delivery.id,
+        docType: 'DELIVERY',
+        docTypeLabel: 'Delivery',
+        reference: delivery.ledgerId,
+        contact: delivery.deliveryAddress.split('\n')[0] || 'Customer Shipment',
+        location: 'STAGE-NORTH',
+        category: 'Fasteners',
+        status: delivery.status,
+        time: delivery.timestampUtc || '08:15 UTC',
+        onClick: () => navigate('/deliveries'),
+      });
+    }
+
+    // Add Move Records / Internal Transfers
+    moveRecords.forEach((m) => {
+      const isInternal = m.kind === 'internal';
+      list.push({
+        id: m.reference,
+        docType: isInternal ? 'INTERNAL' : (m.kind === 'inbound' ? 'RECEIPTS' : 'DELIVERY'),
+        docTypeLabel: isInternal ? 'Internal Transfer' : (m.kind === 'inbound' ? 'Inbound Move' : 'Outbound Move'),
+        reference: m.carrierTag || 'MOV-LEDGER',
+        contact: m.carrier,
+        location: `${m.from} → ${m.to}`,
+        category: 'Raw Materials',
+        status: m.status,
+        time: m.timestampUtc.split('//')[1] || '10:00 UTC',
+        onClick: () => navigate('/move-history'),
+      });
+    });
+
+    // Add Stock Adjustments
+    if (adjustmentItems.length > 0) {
+      list.push({
+        id: 'ADJ-CYCLE-2025',
+        docType: 'ADJUSTMENT',
+        docTypeLabel: 'Stock Adjustment',
+        reference: 'AUDIT-TEAM-A3',
+        contact: 'Physical Inventory Reconciliation',
+        location: 'WH-A / ALL BAYS',
+        category: 'Raw Materials',
+        status: 'DONE',
+        time: '11:45 UTC',
+        onClick: () => navigate('/transfers'),
+      });
+    }
+
+    return list;
+  }, [receipts, delivery, moveRecords, adjustmentItems, setSelectedReceiptId, navigate]);
+
+  // Filter compiled operations based on Dynamic Filter Bar
+  const filteredOperations = useMemo(() => {
+    return compiledOperations.filter((op: any) => {
+      const matchDocType = filterDocType === 'ALL' || op.docType === filterDocType;
+      const matchStatus = filterStatus === 'ALL' || op.status.toUpperCase() === filterStatus.toUpperCase();
+      const matchLocation = filterLocation === 'ALL' || op.location.toLowerCase().includes(filterLocation.toLowerCase());
+      const matchCategory = filterCategory === 'ALL' || op.category.toLowerCase() === filterCategory.toLowerCase();
+      const matchSearch =
+        !filterSearch.trim() ||
+        op.id.toLowerCase().includes(filterSearch.toLowerCase()) ||
+        op.reference.toLowerCase().includes(filterSearch.toLowerCase()) ||
+        op.contact.toLowerCase().includes(filterSearch.toLowerCase());
+
+      return matchDocType && matchStatus && matchLocation && matchCategory && matchSearch;
+    });
+  }, [compiledOperations, filterDocType, filterStatus, filterLocation, filterCategory, filterSearch]);
+
+  const isFiltered =
+    filterDocType !== 'ALL' ||
+    filterStatus !== 'ALL' ||
+    filterLocation !== 'ALL' ||
+    filterCategory !== 'ALL' ||
+    filterSearch.trim() !== '';
+
+  const resetFilters = () => {
+    setFilterDocType('ALL');
+    setFilterStatus('ALL');
+    setFilterLocation('ALL');
+    setFilterCategory('ALL');
+    setFilterSearch('');
+  };
 
   return (
     <div className="flex flex-col w-full max-w-[1400px] mx-auto py-8 px-4 sm:px-6">
@@ -140,91 +265,191 @@ export const DashboardView: React.FC = () => {
         </div>
       </section>
 
-      {/* Plain Text Operations Section */}
-      <section aria-label="Active Ledger Operations" className="w-full mt-8">
+      {/* Dynamic Multi-Filters Toolbar */}
+      <section aria-label="Dynamic Filters Toolbar" className="w-full mt-4 mb-2">
+        <div className="bg-surface-low border border-rule p-4 rounded-[2px] flex flex-col gap-3 shadow-xs">
+          <div className="flex items-center justify-between border-b border-rule pb-2.5">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px] text-primary-container">tune</span>
+              <span className="font-label-md text-label-md uppercase tracking-wider text-on-surface font-semibold">
+                DYNAMIC LEDGER FILTERS
+              </span>
+            </div>
+            {isFiltered && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="text-xs font-label-sm text-primary-container hover:underline uppercase tracking-wider font-semibold cursor-pointer"
+              >
+                Clear All Filters
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {/* Filter 1: Document Type */}
+            <div className="flex flex-col gap-1">
+              <label className="font-label-sm text-label-sm uppercase text-secondary font-semibold">
+                Document Type
+              </label>
+              <select
+                value={filterDocType}
+                onChange={(e) => setFilterDocType(e.target.value)}
+                className="h-8 px-2 bg-surface-lowest border border-rule font-label-sm text-label-sm uppercase text-on-surface focus:outline-none focus:border-primary-container"
+              >
+                <option value="ALL">All Documents</option>
+                <option value="RECEIPTS">Receipts (Incoming)</option>
+                <option value="DELIVERY">Delivery Orders (Outgoing)</option>
+                <option value="INTERNAL">Internal Transfers</option>
+                <option value="ADJUSTMENT">Stock Adjustments</option>
+              </select>
+            </div>
+
+            {/* Filter 2: Status */}
+            <div className="flex flex-col gap-1">
+              <label className="font-label-sm text-label-sm uppercase text-secondary font-semibold">
+                Status
+              </label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="h-8 px-2 bg-surface-lowest border border-rule font-label-sm text-label-sm uppercase text-on-surface focus:outline-none focus:border-primary-container"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="DRAFT">Draft</option>
+                <option value="WAITING">Waiting</option>
+                <option value="READY">Ready</option>
+                <option value="DONE">Done</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+
+            {/* Filter 3: Warehouse / Location */}
+            <div className="flex flex-col gap-1">
+              <label className="font-label-sm text-label-sm uppercase text-secondary font-semibold">
+                Warehouse / Location
+              </label>
+              <select
+                value={filterLocation}
+                onChange={(e) => setFilterLocation(e.target.value)}
+                className="h-8 px-2 bg-surface-lowest border border-rule font-label-sm text-label-sm uppercase text-on-surface focus:outline-none focus:border-primary-container"
+              >
+                <option value="ALL">All Locations</option>
+                <option value="WH-A">WH-A Main Store</option>
+                <option value="WH-B">WH-B Production Bay</option>
+                <option value="STAGE-NORTH">Stage-North</option>
+              </select>
+            </div>
+
+            {/* Filter 4: Product Category */}
+            <div className="flex flex-col gap-1">
+              <label className="font-label-sm text-label-sm uppercase text-secondary font-semibold">
+                Category
+              </label>
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="h-8 px-2 bg-surface-lowest border border-rule font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary-container"
+              >
+                <option value="ALL">All Categories</option>
+                <option value="Raw Materials">Raw Materials</option>
+                <option value="Fasteners">Fasteners</option>
+                <option value="Seals & Gaskets">Seals &amp; Gaskets</option>
+                <option value="Packaging">Packaging</option>
+                <option value="Fluids">Fluids</option>
+                <option value="Electrical">Electrical</option>
+              </select>
+            </div>
+
+            {/* Filter 5: Search Input */}
+            <div className="flex flex-col gap-1">
+              <label className="font-label-sm text-label-sm uppercase text-secondary font-semibold">
+                Quick Search
+              </label>
+              <input
+                type="text"
+                value={filterSearch}
+                onChange={(e) => setFilterSearch(e.target.value)}
+                placeholder="ID, Ref, or Contact..."
+                className="h-8 px-2 bg-surface-lowest border border-rule font-body-sm text-body-sm text-on-surface placeholder:text-secondary focus:outline-none focus:border-primary-container"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Operations Ledger Section */}
+      <section aria-label="Active Ledger Operations" className="w-full mt-4">
         <div className="flex items-center justify-between pb-3 border-b border-on-surface">
           <h2 className="font-label-md text-label-md text-tertiary uppercase tracking-wider font-semibold">
-            Active Operations
+            Active Ledger Operations ({filteredOperations.length})
           </h2>
           <span className="font-label-sm text-label-sm text-secondary uppercase">
-            LIVE DATA
+            LIVE FILTERED DATA
           </span>
         </div>
 
         {/* Operational Ledger Rows */}
         <div className="flex flex-col w-full divide-y divide-rule">
-          {/* Row 1: Receipts */}
-          <div
-            onClick={() => {
-              setSelectedReceiptId('RCV-2023-88401');
-              navigate('/receipts');
-            }}
-            className="group flex flex-col md:flex-row md:items-center justify-between py-4 px-2 transition-colors duration-100 hover:bg-surface-container cursor-pointer"
-          >
-            <div className="flex items-center gap-6 min-w-0">
-              <span className="font-headline-md text-headline-md text-on-surface w-28 shrink-0">
-                Receipts
-              </span>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1">
-                <span className="font-label-md text-label-md text-on-surface font-semibold tracking-wide">
-                  {String(receipts?.length || 0).padStart(2, '0')} INBOUND RECEIPTS
-                </span>
-                <span className="hidden sm:inline text-outline-variant font-label-sm">•</span>
-                <span className="font-label-sm text-label-sm text-tertiary font-mono">
-                  RCV-2023-88401 // RCV-2023-88412
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-8 mt-2 md:mt-0 justify-between md:justify-end">
-              <span className="font-label-sm text-label-sm text-secondary tabular-nums">
-                EXP 09:30 UTC
-              </span>
-              <div className="flex items-center gap-1.5 w-24 justify-start">
-                <span className="w-[3px] h-3 bg-[#B98424] shrink-0" />
-                <span className="font-label-md text-label-md text-on-surface font-semibold tracking-wider">
-                  WAITING
-                </span>
-              </div>
-            </div>
-          </div>
+          {filteredOperations.length > 0 ? (
+            filteredOperations.map((op: any) => {
+              const isDone = op.status === 'DONE';
+              const isWaiting = op.status === 'WAITING' || op.status === 'READY';
 
-          {/* Row 2: Delivery */}
-          <div
-            onClick={() => navigate('/deliveries')}
-            className="group flex flex-col md:flex-row md:items-center justify-between py-4 px-2 transition-colors duration-100 hover:bg-surface-container cursor-pointer"
-          >
-            <div className="flex items-center gap-6 min-w-0">
-              <span className="font-headline-md text-headline-md text-on-surface w-28 shrink-0">
-                Delivery
-              </span>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1">
-                <span className="font-label-md text-label-md text-on-surface font-semibold tracking-wide">
-                  01 OUTBOUND DELIVERIES
-                </span>
-                <span className="hidden sm:inline text-outline-variant font-label-sm">•</span>
-                <span className="font-label-sm text-label-sm text-tertiary font-mono">
-                  {delivery?.id || 'N/A'} // {delivery?.routing ? delivery.routing.split('//')[0].trim() : 'N/A'}
-                </span>
-              </div>
+              return (
+                <div
+                  key={op.id}
+                  onClick={op.onClick}
+                  className="group flex flex-col md:flex-row md:items-center justify-between py-4 px-2 transition-colors duration-100 hover:bg-surface-container cursor-pointer"
+                >
+                  <div className="flex items-center gap-6 min-w-0">
+                    <div className="flex flex-col w-32 shrink-0">
+                      <span className="font-headline-md text-headline-md text-on-surface">
+                        {op.docTypeLabel}
+                      </span>
+                      <span className="font-label-sm text-[10px] text-tertiary font-mono">
+                        {op.id}
+                      </span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1">
+                      <span className="font-label-md text-label-md text-on-surface font-semibold tracking-wide">
+                        {op.contact}
+                      </span>
+                      <span className="hidden sm:inline text-outline-variant font-label-sm">•</span>
+                      <span className="font-label-sm text-label-sm text-tertiary font-mono">
+                        {op.reference} // {op.location}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-8 mt-2 md:mt-0 justify-between md:justify-end">
+                    <span className="font-label-sm text-label-sm text-secondary tabular-nums">
+                      {op.time}
+                    </span>
+                    <div className="flex items-center gap-1.5 w-28 justify-start">
+                      <span
+                        className={`w-[3px] h-3 shrink-0 ${
+                          isDone ? 'bg-[#3F6B4A]' : isWaiting ? 'bg-[#B98424]' : 'bg-primary-container'
+                        }`}
+                      />
+                      <span className="font-label-md text-label-md text-on-surface font-semibold tracking-wider uppercase">
+                        {op.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="py-12 text-center text-secondary font-label-md">
+              // NO OPERATIONAL DOCUMENTS MATCH THE APPLIED DYNAMIC FILTERS //
             </div>
-            <div className="flex items-center gap-8 mt-2 md:mt-0 justify-between md:justify-end">
-              <span className="font-label-sm text-label-sm text-secondary tabular-nums">
-                DSP 08:15 UTC
-              </span>
-              <div className="flex items-center gap-1.5 w-24 justify-start">
-                <span className={`w-[3px] h-3 shrink-0 ${delivery?.status === 'DONE' ? 'bg-[#3F6B4A]' : 'bg-[#B98424]'}`} />
-                <span className="font-label-md text-label-md text-on-surface font-semibold tracking-wider">
-                  {delivery?.status || 'UNKNOWN'}
-                </span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Supplementary Register Detail Footnote */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 mt-2 border-t border-rule font-label-sm text-label-sm text-secondary gap-2">
           <span>DATABASE STATUS</span>
-          <span>SYNCED TO CLOUD</span>
+          <span>LIVE CLOUD SYNC ACTIVE</span>
         </div>
       </section>
     </div>
