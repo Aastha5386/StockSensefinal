@@ -128,7 +128,7 @@ export const DashboardView: React.FC = () => {
             Active Operations
           </h2>
           <span className="font-label-sm text-label-sm text-secondary uppercase">
-            // TALLY REGISTER 402
+            LIVE DATA
           </span>
         </div>
 
@@ -148,7 +148,7 @@ export const DashboardView: React.FC = () => {
               </span>
               <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1">
                 <span className="font-label-md text-label-md text-on-surface font-semibold tracking-wide">
-                  {String(receipts?.length || 0).padStart(2, '0')} INBOUND MANIFESTS
+                  {String(receipts?.length || 0).padStart(2, '0')} INBOUND RECEIPTS
                 </span>
                 <span className="hidden sm:inline text-outline-variant font-label-sm">•</span>
                 <span className="font-label-sm text-label-sm text-tertiary font-mono">
@@ -180,7 +180,7 @@ export const DashboardView: React.FC = () => {
               </span>
               <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1">
                 <span className="font-label-md text-label-md text-on-surface font-semibold tracking-wide">
-                  01 OUTBOUND LOADS
+                  01 OUTBOUND DELIVERIES
                 </span>
                 <span className="hidden sm:inline text-outline-variant font-label-sm">•</span>
                 <span className="font-label-sm text-label-sm text-tertiary font-mono">
@@ -204,8 +204,8 @@ export const DashboardView: React.FC = () => {
 
         {/* Supplementary Register Detail Footnote */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 mt-2 border-t border-rule font-label-sm text-label-sm text-secondary gap-2">
-          <span>ARCHIVE REF: LDG-VOL-78</span>
-          <span>ALL MARITIME &amp; DEPOT STAMPS SYNCHRONIZED</span>
+          <span>DATABASE STATUS</span>
+          <span>SYNCED TO CLOUD</span>
         </div>
       </section>
     </div>

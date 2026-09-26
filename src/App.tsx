@@ -20,12 +20,22 @@ import { TransfersView } from './components/views/TransfersView';
 import { MoveHistoryView } from './components/views/MoveHistoryView';
 import { SettingsView } from './components/views/SettingsView';
 import { ProfileStationView } from './components/views/ProfileStationView';
+import { AdminUsersView } from './components/views/AdminUsersView';
 
 const MainAppContent: React.FC = () => {
-  const { currentScreen, isAuthenticated } = useApp();
+  const { currentScreen, isAuthenticated, authLoading, userRole } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // If user is not logged in or explicitly at login screen, show the Archival Terminal Auth
+  // If loading Firebase Auth, show a spinner or nothing
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface text-on-surface">
+        <div className="text-secondary font-label-lg tracking-wider">INITIALIZING SESSION...</div>
+      </div>
+    );
+  }
+
+  // If user is not logged in or explicitly at login screen, show the Login Screen
   if (!isAuthenticated || currentScreen === 'login') {
     return (
       <>
@@ -52,7 +62,9 @@ const MainAppContent: React.FC = () => {
       case 'move-history':
         return <MoveHistoryView />;
       case 'settings':
-        return <SettingsView />;
+        return userRole === 'warehouse_staff' ? <DashboardView /> : <SettingsView />;
+      case 'settings-users':
+        return userRole === 'admin' ? <AdminUsersView /> : <DashboardView />;
       case 'profile-station':
         return <ProfileStationView />;
       default:

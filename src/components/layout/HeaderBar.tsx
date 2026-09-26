@@ -83,14 +83,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onToggleMobileMenu }) => {
             <img
               alt="Operator Avatar"
               className="w-7 h-7 rounded-full object-cover border border-outline-variant"
-              src={userProfile.avatarUrl || ASSET_IMAGES.avatar}
+              src={userProfile?.avatarUrl || ASSET_IMAGES.avatar}
             />
             <div className="hidden lg:flex flex-col text-left">
               <span className="font-label-md text-label-md font-semibold text-on-surface leading-tight tracking-wider">
-                {userProfile.name}
+                {userProfile?.name || 'User'}
               </span>
               <span className="font-label-sm text-label-sm text-secondary leading-none">
-                {userProfile.operatorId}
+                {userProfile?.email || ''}
               </span>
             </div>
             <span
@@ -112,38 +112,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onToggleMobileMenu }) => {
               <div className="p-3 bg-surface-low border-b border-rule flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                   <span className="font-label-lg text-label-lg font-bold text-on-surface tracking-wider">
-                    {userProfile.name}
+                    {userProfile?.name || 'User'}
                   </span>
                   <span className="font-label-sm text-label-sm px-1.5 py-0.5 bg-primary-fixed text-primary-container font-bold rounded-[2px] uppercase">
                     ACTIVE
                   </span>
                 </div>
                 <span className="font-label-sm text-label-sm text-secondary truncate">
-                  {userProfile.email}
+                  {userProfile?.email || ''}
                 </span>
                 <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider mt-1">
-                  // {userProfile.role} · TERMINAL AUTH
+                  {userProfile?.role || 'warehouse_staff'}
                 </span>
-              </div>
-
-              {/* Metric Tally Strip in Menu */}
-              <div className="grid grid-cols-2 p-2 bg-surface text-center border-b border-rule">
-                <div className="flex flex-col border-r border-rule pr-2">
-                  <span className="font-label-sm text-label-sm text-secondary uppercase">
-                    SHIFT DISPATCH
-                  </span>
-                  <span className="font-label-md text-label-md font-semibold text-on-surface">
-                    {userProfile.shiftDispatch}
-                  </span>
-                </div>
-                <div className="flex flex-col pl-2">
-                  <span className="font-label-sm text-label-sm text-secondary uppercase">
-                    LOG SIGNATURE
-                  </span>
-                  <span className="font-label-md text-label-md font-semibold text-primary-container">
-                    {userProfile.logSignature}
-                  </span>
-                </div>
               </div>
 
               {/* Action Rows */}
@@ -159,37 +139,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onToggleMobileMenu }) => {
                     badge
                   </span>
                   <span className="font-label-md text-label-md tracking-wider uppercase font-medium">
-                    Operator Station Profile
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setCurrentScreen('profile-station');
-                    setProfileOpen(false);
-                  }}
-                  className="flex items-center gap-2.5 px-3 py-2 text-on-surface hover:bg-surface-container transition-colors text-left"
-                >
-                  <span className="material-symbols-outlined text-[18px] text-tertiary">
-                    key
-                  </span>
-                  <span className="font-label-md text-label-md tracking-wider uppercase font-medium">
-                    Station Credentials
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setCurrentScreen('profile-station');
-                    setProfileOpen(false);
-                  }}
-                  className="flex items-center gap-2.5 px-3 py-2 text-on-surface hover:bg-surface-container transition-colors text-left"
-                >
-                  <span className="material-symbols-outlined text-[18px] text-tertiary">
-                    terminal
-                  </span>
-                  <span className="font-label-md text-label-md tracking-wider uppercase font-medium">
-                    Bay 03 Hardware Link
+                    View Profile
                   </span>
                 </button>
 
@@ -204,15 +154,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({ onToggleMobileMenu }) => {
                 >
                   <span className="material-symbols-outlined text-[18px]">logout</span>
                   <span className="font-label-md text-label-md tracking-wider uppercase font-semibold">
-                    Sign Out Station
+                    Sign Out
                   </span>
                 </button>
-              </div>
-
-              {/* Ledger Footer Stamp */}
-              <div className="px-3 py-1.5 bg-surface-low border-t border-rule flex items-center justify-between text-secondary">
-                <span className="font-label-sm text-label-sm uppercase">SEC-TOKEN: #89B4-402</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-tertiary" />
               </div>
             </div>
           )}

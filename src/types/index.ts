@@ -136,4 +136,5 @@ export type ViewScreen =
   | 'transfers'
   | 'move-history'
   | 'settings'
-  | 'profile-station';
+  | 'profile-station'
+  | 'settings-users'; // new admin view

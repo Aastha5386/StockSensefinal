@@ -8,20 +8,24 @@ interface SidebarRailProps {
 }
 
 export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileOpen }) => {
-  const { currentScreen, setCurrentScreen } = useApp();
+  const { currentScreen, setCurrentScreen, userRole } = useApp();
 
   const navItems: { screen: ViewScreen; title: string; icon: string }[] = [
     { screen: 'dashboard', title: 'Dashboard', icon: 'dashboard' },
     { screen: 'products', title: 'Catalog & Products', icon: 'inventory_2' },
-    { screen: 'receipts', title: 'Inbound Receipts', icon: 'receipt_long' },
-    { screen: 'transfers', title: 'Depot Transfers & Adjustments', icon: 'sync_alt' },
-    { screen: 'move-history', title: 'Move History & Archive Ledger', icon: 'history' },
+    { screen: 'receipts', title: 'Receipts', icon: 'receipt_long' },
+    { screen: 'transfers', title: 'Transfers', icon: 'sync_alt' },
+    { screen: 'move-history', title: 'History', icon: 'history' },
   ];
 
-  const bottomItems: { screen: ViewScreen; title: string; icon: string }[] = [
-    { screen: 'settings', title: 'Warehouse & Location Settings', icon: 'tune' },
-    { screen: 'profile-station', title: 'Station Terminal & Operator Profile', icon: 'desktop_windows' },
-  ];
+  const bottomItems: { screen: ViewScreen; title: string; icon: string }[] = [];
+  if (userRole !== 'warehouse_staff') {
+    bottomItems.push({ screen: 'settings', title: 'Settings', icon: 'tune' });
+  }
+  if (userRole === 'admin') {
+    bottomItems.push({ screen: 'settings-users', title: 'Users', icon: 'manage_accounts' });
+  }
+  bottomItems.push({ screen: 'profile-station', title: 'Profile', icon: 'account_circle' });
 
   const handleNav = (screen: ViewScreen) => {
     setCurrentScreen(screen);
@@ -129,7 +133,7 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileO
 
               <div className="pt-4 flex flex-col gap-1">
                 <div className="font-label-sm text-label-sm text-secondary uppercase px-2 pb-1 tracking-widest">
-                  // DEPOT REGISTERS
+                  MAIN MENU
                 </div>
                 {navItems.map((item) => {
                   const active = isActive(item.screen);
@@ -153,7 +157,7 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileO
 
             <div className="pt-4 border-t border-surface-variant/20 flex flex-col gap-1">
               <div className="font-label-sm text-label-sm text-secondary uppercase px-2 pb-1 tracking-widest">
-                // SYSTEM TERMINAL
+                SYSTEM
               </div>
               {bottomItems.map((item) => {
                 const active = isActive(item.screen);

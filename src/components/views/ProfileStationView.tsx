@@ -68,8 +68,11 @@ const parcelManifests: ParcelItem[] = [
 ];
 
 export const ProfileStationView: React.FC = () => {
-  const { userProfile, showToast } = useApp();
+  const { userProfile, showToast, updateProfile } = useApp();
   const [filterTab, setFilterTab] = useState<'all' | 'transit' | 'staged' | 'customs'>('all');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(userProfile?.name || '');
+  const [editAvatarUrl, setEditAvatarUrl] = useState(userProfile?.avatarUrl || '');
 
   return (
     <div className="w-full max-w-[1440px] mx-auto pb-16 pt-2 px-4 sm:px-6 flex flex-col gap-6">
@@ -90,9 +93,31 @@ export const ProfileStationView: React.FC = () => {
 
         {/* Station User Tag */}
         <div className="flex items-center gap-2 font-label-md text-label-md uppercase text-secondary">
-          <span>OPERATOR:</span>
-          <span className="font-bold text-on-surface">{userProfile.name}</span>
-          <span className="text-tertiary">[{userProfile.operatorId}]</span>
+          <span>USER:</span>
+          {isEditing ? (
+            <div className="flex items-center gap-2">
+              <input 
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                className="bg-surface-lowest text-on-surface border border-rule px-2 py-1 outline-none font-body-sm normal-case w-32 h-7"
+                placeholder="Name"
+              />
+              <input 
+                value={editAvatarUrl}
+                onChange={e => setEditAvatarUrl(e.target.value)}
+                className="bg-surface-lowest text-on-surface border border-rule px-2 py-1 outline-none font-body-sm normal-case w-48 h-7"
+                placeholder="Avatar URL"
+              />
+              <button onClick={() => { updateProfile(editName, editAvatarUrl); setIsEditing(false); }} className="px-2 py-1 bg-primary-container text-white text-xs h-7 rounded-[2px]">Save</button>
+              <button onClick={() => setIsEditing(false)} className="px-2 py-1 border border-rule text-on-surface text-xs h-7 rounded-[2px]">Cancel</button>
+            </div>
+          ) : (
+            <>
+              <span className="font-bold text-on-surface">{userProfile?.name || 'User'}</span>
+              <span className="text-tertiary">[{userProfile?.email || ''}]</span>
+              <button onClick={() => setIsEditing(true)} className="ml-2 text-primary-container hover:underline lowercase text-xs">edit</button>
+            </>
+          )}
         </div>
       </div>
 

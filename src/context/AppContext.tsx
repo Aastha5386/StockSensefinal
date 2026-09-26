@@ -1,4 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { auth, db } from '../lib/firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import {
   Product,
   Receipt,
@@ -32,8 +35,13 @@ interface AppContextType {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
   isAuthenticated: boolean;
-  login: (email: string, password?: string) => boolean;
-  logout: () => void;
+  authLoading: boolean;
+  userRole: string | null;
+  userUid: string | null;
+  login: (email: string, password?: string) => Promise<boolean>;
+  register: (email: string, password?: string, firstName?: string, lastName?: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  updateProfile: (name: string, avatarUrl: string) => Promise<void>;
 
   products: Product[];
   addProduct: (product: Product) => void;
@@ -60,7 +68,7 @@ interface AppContextType {
   archiveWarehouse: (code: string) => void;
 
   subLocations: SubLocationZone[];
-  userProfile: UserProfile;
+  userProfile: UserProfile | null;
 
   toast: { message: string; visible: boolean } | null;
   showToast: (msg: string) => void;
@@ -73,7 +81,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentScreen, setCurrentScreen] = useState<ViewScreen>('dashboard');
   const [selectedReceiptId, setSelectedReceiptId] = useState<string>('RCV-2023-88401');
   const [selectedDeliveryId, setSelectedDeliveryId] = useState<string>('WH/OUT/0042');
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userUid, setUserUid] = useState<string | null>(null);
 
   // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -144,7 +155,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [subLocations] = useState<SubLocationZone[]>(initialSubLocations);
-  const [userProfile] = useState<UserProfile>(initialUserProfile);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; visible: boolean } | null>(null);
@@ -156,17 +167,109 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, 3500);
   };
 
-  const login = (email: string) => {
-    setIsAuthenticated(true);
-    setCurrentScreen('dashboard');
-    showToast(`OPERATOR SESSION ESTABLISHED // ${email.toUpperCase()}`);
-    return true;
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        setUserUid(user.uid);
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            setUserRole(data.role || 'warehouse_staff');
+            setUserProfile({
+              id: user.uid,
+              name: `${data.firstName || 'Unknown'} ${data.lastName || 'User'}`.trim(),
+              email: data.email || user.email || '',
+              role: data.role || 'warehouse_staff',
+              operatorId: data.firstName || 'OP-NEW',
+              avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.uid
+            });
+          } else {
+            setUserRole('warehouse_staff');
+            setUserProfile({
+              id: user.uid,
+              name: user.email || 'Unknown User',
+              email: user.email || '',
+              role: 'warehouse_staff',
+              operatorId: 'OP-NEW',
+              avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.uid
+            });
+          }
+        } catch (e) {
+          setUserRole('warehouse_staff');
+        }
+        if (currentScreen === 'login') {
+          setCurrentScreen('dashboard');
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUserUid(null);
+        setUserRole(null);
+        setCurrentScreen('login');
+      }
+      setAuthLoading(false);
+    });
+    return unsubscribe;
+  }, [currentScreen]);
+
+  const login = async (email: string, password?: string) => {
+    if (!password) return false;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      showToast(`OPERATOR SESSION ESTABLISHED // ${email.toUpperCase()}`);
+      return true;
+    } catch (err: any) {
+      showToast(`AUTH FAILED: ${err.message}`);
+      return false;
+    }
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setCurrentScreen('login');
-    showToast('TERMINAL SESSION LOGGED OUT // ARCHIVE SEAL APPLIED');
+  const register = async (email: string, password?: string, firstName?: string, lastName?: string) => {
+    if (!password) return false;
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // Create user document in Firestore with default role
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        email: userCredential.user.email,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        role: 'warehouse_staff',
+        createdAt: new Date().toISOString()
+      });
+      showToast(`NEW TERMINAL ID REGISTERED // ${email.toUpperCase()}`);
+      return true;
+    } catch (err: any) {
+      showToast(`REGISTRATION FAILED: ${err.message}`);
+      return false;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      showToast('TERMINAL SESSION LOGGED OUT // ARCHIVE SEAL APPLIED');
+    } catch (err: any) {
+      showToast(`LOGOUT ERROR: ${err.message}`);
+    }
+  };
+
+  const updateProfile = async (name: string, avatarUrl: string) => {
+    if (!userUid) return;
+    try {
+      const parts = name.split(' ');
+      const firstName = parts[0] || '';
+      const lastName = parts.slice(1).join(' ') || '';
+      await setDoc(doc(db, 'users', userUid), {
+        firstName,
+        lastName,
+        avatarUrl
+      }, { merge: true });
+      setUserProfile((prev) => prev ? { ...prev, name, avatarUrl } : null);
+      showToast(`PROFILE UPDATED SUCCESSFULLY`);
+    } catch (err: any) {
+      showToast(`PROFILE UPDATE FAILED: ${err.message}`);
+    }
   };
 
   const addProduct = (product: Product) => {
@@ -389,8 +492,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isDarkMode,
         toggleDarkMode,
         isAuthenticated,
+        authLoading,
+        userRole,
+        userUid,
         login,
+        register,
         logout,
+        updateProfile,
         products,
         addProduct,
         receipts,
