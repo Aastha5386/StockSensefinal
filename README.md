@@ -1,62 +1,90 @@
-# 🏆 Odoo Hackathon 2026 Project
+# 📦 StockSense: Next-Gen Inventory & Freight Management
 
-Welcome to our project repository for the Odoo LPU Hackathon 2026! 🚀
+![StockSense Banner](https://img.shields.io/badge/Odoo%20Hackathon-Winner%20Material-FF6B6B?style=for-the-badge&logo=odoo&logoColor=white) 
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) 
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) 
+![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) 
+![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase)
+![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
 
-This repository contains our innovative solution, built using modern web technologies to deliver an exceptional user experience, likely integrating with or inspired by Odoo ecosystem concepts.
+**StockSense** is a centralized, real-time inventory and freight management platform built for speed, security, and scalability. Designed to bridge the gap between complex logistical operations and intuitive user experiences, StockSense provides a robust archival tally ledger, seamless dispatch systems, and instant discrepancy reconciliation.
 
-## ✨ Project Overview
+---
 
-A modern web application built for the hackathon, leveraging AI (Google GenAI) and an interactive frontend to solve our problem statement efficiently.
+## ✨ Key Features
 
-## 👥 The Team
+- 🔐 **Multi-Provider Authentication**: Secure login via Email/Password, Google OAuth, and Phone Number (OTP/SMS) using Firebase Auth.
+- 🛡️ **Role-Based Access Control (RBAC)**: Strict permission gating powered by Firestore Security Rules. 
+  - **Admins** have full operational control and user management capabilities.
+  - **Warehouse Staff** are sandboxed to their specific daily receipt and transfer tasks.
+- ⚡ **Real-Time Data Sync**: Powered by Firebase Firestore, ensuring that inventory ledgers, stock receipts, and transfer histories are updated across all clients instantly.
+- 🎨 **Premium UI/UX Design**: Built with Tailwind CSS, featuring a polished, responsive layout, fluid micro-animations, customizable dark/light modes, and intuitive navigation rails.
+- ☁️ **Serverless Architecture**: Utilizes Firebase Cloud Functions for backend logic and Vercel for lightning-fast frontend delivery.
 
-We are a passionate team of developers and designers, ready to build something amazing!
-
-| Name | Role |
-| :--- | :--- |
-| **Sandeep** | Team Leader & DevOps / Integrator |
-| **Smurtirani Khadanga** | Frontend Developer (UI/UX Designer) |
-| **Aastha** | Backend Developer |
+---
 
 ## 🛠️ Technology Stack
 
-- **Frontend Framework:** React 19, Vite
-- **Styling:** Tailwind CSS (v4), Motion (Framer Motion)
-- **Icons:** Lucide React
-- **AI Integration:** Google GenAI SDK
-- **Language:** TypeScript
+### Frontend Architecture
+- **Framework**: [React 18](https://reactjs.org/) + [Vite](https://vitejs.dev/) for blazing-fast HMR and optimized production builds.
+- **Language**: [TypeScript](https://www.typescriptlang.org/) for strict type safety and scalable codebases.
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) for utility-first, highly customizable, and responsive design components.
+- **Icons**: Google Material Symbols.
+
+### Backend & Infrastructure
+- **Authentication**: Firebase Auth (Google, Phone OTP, Email).
+- **Database**: Cloud Firestore (NoSQL Document Database).
+- **Backend Logic**: Firebase Cloud Functions (Node.js).
+- **Hosting & CI/CD**: Deployed globally via [Vercel](https://vercel.com).
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
+Make sure you have [Node.js](https://nodejs.org/) (v18+) and npm installed.
 
-- Node.js (v18 or higher recommended)
-- npm or yarn
+### Local Installation
 
-### Installation & Running Locally
-
-1. Clone the repository:
+1. **Clone the repository**
    ```bash
-   git clone https://github.com/sandeepkarmata/odoo-lpu-hackathon-2026.git
+   git clone https://github.com/smurtiranikhadanga/odoo-lpu-hackathon-2026.git
    cd odoo-lpu-hackathon-2026
    ```
-2. Install dependencies:
+
+2. **Install dependencies**
    ```bash
    npm install
    ```
-3. Start the development server:
+
+3. **Environment Setup**
+   Create a `.env` file in the root directory based on `.env.example` and add your Firebase configuration keys:
+   ```env
+   VITE_FIREBASE_API_KEY=your_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   ```
+
+4. **Start the Development Server**
    ```bash
    npm run dev
    ```
-4. Build for production:
-   ```bash
-   npm run build
-   ```
+   *The app will be running at `http://localhost:5173`.*
 
-## 🤝 Contributing
+---
 
-This project is built for the Odoo Hackathon. Feel free to explore the code!
+## 🔒 Security & RBAC Implementation
+StockSense utilizes strict Firestore security rules to protect business data. 
+- **User Verification**: Only authenticated users can read/write data.
+- **Role Validation**: Destructive actions and user-management endpoints validate against the user's explicit role (`admin` vs `warehouse_staff`) stored securely in their Firestore profile document.
 
-## 📜 License
+---
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 🏆 Hackathon Details
+Built for the **Odoo Hackathon**. 
+StockSense aims to revolutionize the way small and medium enterprises handle their freight ledgers by providing enterprise-grade tools in an accessible, open-source package.
+
+*Developed with passion by smurtiranikhadanga.*
