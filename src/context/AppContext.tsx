@@ -180,9 +180,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           : r
       )
     );
-    // Add to Move Records
+    // Add to Move Records and Update Products
     const target = receipts.find((r) => r.id === id);
     if (target) {
+      setProducts((prev) => 
+        prev.map(p => {
+          const matchedItem = target.items.find(i => i.sku === p.sku);
+          if (matchedItem) {
+            return {
+              ...p,
+              onHand: p.onHand + matchedItem.quantity,
+              freeToUse: p.freeToUse + matchedItem.quantity
+            };
+          }
+          return p;
+        })
+      );
+
       const newMove: MoveRecord = {
         reference: `MOV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
         timestampUtc: `${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()} // ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} UTC`,
@@ -222,13 +236,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const validateDelivery = () => {
+    if (delivery.status === 'DONE') return; // Prevent double validation
+
     setDelivery((prev) => ({
       ...prev,
-      status: prev.status === 'DONE' ? 'READY' : 'DONE',
+      status: 'DONE',
       pickVerified: true,
       packInspected: true,
-      stageName: prev.status === 'DONE' ? 'STAGE VERIFIED' : 'DISPATCHED & SEALED',
+      stageName: 'DISPATCHED & SEALED',
     }));
+
+    // Update Products
+    setProducts((prev) => 
+      prev.map(p => {
+        const matchedItem = delivery.items.find(i => i.sku === p.sku);
+        if (matchedItem) {
+          const qty = parseInt(matchedItem.quantity.replace(/[^0-9]/g, '')) || 0;
+          return {
+            ...p,
+            onHand: Math.max(0, p.onHand - qty),
+            freeToUse: Math.max(0, p.freeToUse - qty)
+          };
+        }
+        return p;
+      })
+    );
+
+    // Add to move records
+    const qtyTotal = delivery.items.reduce((acc, i) => acc + (parseInt(i.quantity.replace(/[^0-9]/g, '')) || 0), 0);
+    const newMove: MoveRecord = {
+      reference: `MOV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      timestampUtc: `${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()} // ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} UTC`,
+      carrier: `Outbound Dispatch / ${delivery.routing.split('//')[0].trim()}`,
+      carrierTag: 'OUT-DSP',
+      from: 'STAGE-NORTH',
+      to: 'CUSTOMER',
+      quantity: `-${qtyTotal} UNITS`,
+      isPositive: false,
+      status: 'DONE',
+      kind: 'outbound',
+    };
+    setMoveRecords((prev) => [newMove, ...prev]);
+
     showToast('DISPATCH ATTESTED & INKED TO MARITIME BUFFER');
   };
 
@@ -245,21 +294,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const postAdjustmentRecord = (notes: string) => {
     showToast(`PHYSICAL TALLY POSTED & AUDIT REGISTRY SEALED (#MARSHAL-104)`);
+    // Update Products
+    setProducts((prev) => 
+      prev.map(p => {
+        const matchedItem = adjustmentItems.find(i => i.sku === p.sku);
+        if (matchedItem) {
+          const diff = matchedItem.countedQuantity - matchedItem.systemQuantity;
+          return {
+            ...p,
+            onHand: Math.max(0, p.onHand + diff),
+            freeToUse: Math.max(0, p.freeToUse + diff)
+          };
+        }
+        return p;
+      })
+    );
+
     // Add to move records
     const diff = adjustmentItems.reduce((acc, i) => acc + (i.countedQuantity - i.systemQuantity), 0);
-    const newMove: MoveRecord = {
-      reference: `MOV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      timestampUtc: `${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()} // ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} UTC`,
-      carrier: `Physical Reconciliation / Team A-3`,
-      carrierTag: 'ADJ-CYCLE',
-      from: 'PHYSICAL-COUNT',
-      to: 'LEDGER-BALANCE',
-      quantity: `${diff >= 0 ? '+' : ''}${diff} UNITS`,
-      isPositive: diff >= 0,
-      status: 'DONE',
-      kind: 'internal',
-    };
-    setMoveRecords((prev) => [newMove, ...prev]);
+    if (diff !== 0) {
+      const newMove: MoveRecord = {
+        reference: `MOV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        timestampUtc: `${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()} // ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} UTC`,
+        carrier: `Physical Reconciliation / Team A-3`,
+        carrierTag: 'ADJ-CYCLE',
+        from: 'PHYSICAL-COUNT',
+        to: 'LEDGER-BALANCE',
+        quantity: `${diff > 0 ? '+' : ''}${diff} UNITS`,
+        isPositive: diff > 0,
+        status: 'DONE',
+        kind: 'internal',
+      };
+      setMoveRecords((prev) => [newMove, ...prev]);
+    }
   };
 
   const addMoveRecord = (record: MoveRecord) => {

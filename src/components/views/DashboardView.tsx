@@ -25,6 +25,8 @@ export const DashboardView: React.FC = () => {
 
   const totalProductsCount = products.length > 0 ? (4800 + products.length).toLocaleString() : '4,821';
   const pendingReceiptsCount = receipts.filter((r) => r.status === 'READY' || r.status === 'WAITING').length;
+  const pendingDeliveriesCount = delivery.status !== 'DONE' ? 1 : 0;
+  const lowStockCount = products.filter(p => p.onHand <= (p.minThreshold || 0)).length;
 
   return (
     <div className="flex flex-col w-full max-w-[1400px] mx-auto py-8 px-4 sm:px-6">
@@ -79,7 +81,7 @@ export const DashboardView: React.FC = () => {
             </div>
             <div className="flex items-baseline justify-between mt-auto">
               <span className="font-label-lg text-headline-xl text-primary-container tabular-nums font-semibold">
-                18
+                {lowStockCount > 0 ? String(lowStockCount).padStart(2, '0') : '00'}
               </span>
               <span className="font-label-sm text-label-sm text-secondary">&lt; CRIT·THOLD</span>
             </div>
@@ -111,7 +113,7 @@ export const DashboardView: React.FC = () => {
             </span>
             <div className="flex items-baseline justify-between mt-auto">
               <span className="font-label-lg text-headline-xl text-on-surface tabular-nums font-semibold">
-                07
+                {String(pendingDeliveriesCount).padStart(2, '0')}
               </span>
               <span className="font-label-sm text-label-sm text-secondary">MARSHALLED</span>
             </div>
@@ -146,7 +148,7 @@ export const DashboardView: React.FC = () => {
               </span>
               <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1">
                 <span className="font-label-md text-label-md text-on-surface font-semibold tracking-wide">
-                  12 INBOUND MANIFESTS
+                  {String(receipts.length).padStart(2, '0')} INBOUND MANIFESTS
                 </span>
                 <span className="hidden sm:inline text-outline-variant font-label-sm">•</span>
                 <span className="font-label-sm text-label-sm text-tertiary font-mono">
@@ -178,11 +180,11 @@ export const DashboardView: React.FC = () => {
               </span>
               <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1">
                 <span className="font-label-md text-label-md text-on-surface font-semibold tracking-wide">
-                  07 OUTBOUND LOADS
+                  01 OUTBOUND LOADS
                 </span>
                 <span className="hidden sm:inline text-outline-variant font-label-sm">•</span>
                 <span className="font-label-sm text-label-sm text-tertiary font-mono">
-                  STG-NORTH-04 // TRK-992-B
+                  {delivery.id} // {delivery.routing.split('//')[0].trim()}
                 </span>
               </div>
             </div>
@@ -191,9 +193,9 @@ export const DashboardView: React.FC = () => {
                 DSP 08:15 UTC
               </span>
               <div className="flex items-center gap-1.5 w-24 justify-start">
-                <span className="w-[3px] h-3 bg-[#3F6B4A] shrink-0" />
+                <span className={`w-[3px] h-3 shrink-0 ${delivery.status === 'DONE' ? 'bg-[#3F6B4A]' : 'bg-[#B98424]'}`} />
                 <span className="font-label-md text-label-md text-on-surface font-semibold tracking-wider">
-                  DONE
+                  {delivery.status}
                 </span>
               </div>
             </div>

@@ -71,7 +71,7 @@ export const ProductsView: React.FC = () => {
           <div className="font-label-sm text-label-sm text-secondary tabular-nums">
             TOTAL REGISTERED:{' '}
             <span className="font-semibold text-on-surface">
-              {(1832 + products.length).toLocaleString()} ITEMS
+              {products.length.toLocaleString()} ITEMS
             </span>
           </div>
         </div>
