@@ -32,17 +32,17 @@ export const LoginView: React.FC = () => {
       await sendPasswordResetEmail(auth, email);
       showToast(`OTP / PASSWORD RESET DISPATCHED TO ${email.toUpperCase()}`);
     } catch (err: any) {
-      showToast(`PASSWORD RESET DISPATCHED TO ${email.toUpperCase()}`);
+      showToast(`PASSWORD RESET FAILED: ${err.message}`);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isRegisterMode) {
-      const ok = await register(email, password, firstName, lastName);
+      const ok = await register(email, password, firstName, lastName, keepActive);
       if (ok) navigate(from, { replace: true });
     } else {
-      const ok = await login(email, password);
+      const ok = await login(email, password, keepActive);
       if (ok) navigate(from, { replace: true });
     }
   };

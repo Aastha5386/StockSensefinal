@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../lib/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import {
   Product,
@@ -32,8 +32,8 @@ interface AppContextType {
   authLoading: boolean;
   userRole: string | null;
   userUid: string | null;
-  login: (email: string, password?: string) => Promise<boolean>;
-  register: (email: string, password?: string, firstName?: string, lastName?: string) => Promise<boolean>;
+  login: (email: string, password?: string, rememberMe?: boolean) => Promise<boolean>;
+  register: (email: string, password?: string, firstName?: string, lastName?: string, rememberMe?: boolean) => Promise<boolean>;
   logout: () => Promise<void>;
   updateProfile: (name: string, avatarUrl: string) => Promise<void>;
 
@@ -158,9 +158,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return unsubscribe;
   }, []);
 
-  const login = async (email: string, password?: string) => {
+  const login = async (email: string, password?: string, rememberMe: boolean = true) => {
     if (!password) return false;
     try {
+      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
       await signInWithEmailAndPassword(auth, email, password);
       localStorage.removeItem('stocksense_signed_out');
       setIsAuthenticated(true);
@@ -172,9 +173,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const register = async (email: string, password?: string, firstName?: string, lastName?: string) => {
+  const register = async (email: string, password?: string, firstName?: string, lastName?: string, rememberMe: boolean = true) => {
     if (!password) return false;
     try {
+      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       localStorage.removeItem('stocksense_signed_out');
       setIsAuthenticated(true);
