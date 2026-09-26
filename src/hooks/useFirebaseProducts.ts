@@ -31,10 +31,11 @@ export const useFirebaseProducts = () => {
     try {
       await runTransaction(db, async (transaction) => {
         // Enforce uniqueness
-        const productRef = doc(collection(db, 'products'), product.id);
+        const docId = product.sku.replace(/\//g, '--');
+        const productRef = doc(collection(db, 'products'), docId);
         const existingDoc = await transaction.get(productRef);
         if (existingDoc.exists()) {
-          throw new Error("A product with this ID already exists.");
+          throw new Error("A product with this SKU already exists.");
         }
         
         transaction.set(productRef, product);
@@ -46,7 +47,8 @@ export const useFirebaseProducts = () => {
 
   const updateProduct = async (sku: string, updatedProduct: Product): Promise<void> => {
     try {
-      const productRef = doc(collection(db, 'products'), updatedProduct.id);
+      const docId = sku.replace(/\//g, '--');
+      const productRef = doc(collection(db, 'products'), docId);
       await setDoc(productRef, updatedProduct, { merge: true });
     } catch (err: any) {
       throw new Error(`Failed to update product: ${err.message}`);
