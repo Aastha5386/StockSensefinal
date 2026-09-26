@@ -31,10 +31,10 @@ export const DeliveryDetailView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-6 border-b border-rule">
         <div>
           <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight font-normal">
-            {delivery.id}
+            {delivery?.id || 'UNKNOWN-ID'}
           </h1>
           <div className="font-label-sm text-label-sm text-tertiary uppercase mt-1">
-            RECORD TIMESTAMP: {delivery.timestampUtc} · LEDGER ID: {delivery.ledgerId}
+            RECORD TIMESTAMP: {delivery?.timestampUtc || 'N/A'} · LEDGER ID: {delivery?.ledgerId || 'N/A'}
           </div>
         </div>
 
@@ -54,7 +54,7 @@ export const DeliveryDetailView: React.FC = () => {
             className="px-5 py-2 bg-primary-container text-white font-label-md text-label-md tracking-wider font-semibold rounded-none border border-primary-container hover:bg-[#8E4217] transition-colors duration-150 flex items-center gap-2 cursor-pointer select-none shadow-none"
           >
             <span className="material-symbols-outlined text-[16px]">check_circle</span>
-            <span>{delivery.status === 'DONE' ? 'DISPATCHED' : 'VALIDATE'}</span>
+            <span>{delivery?.status === 'DONE' ? 'DISPATCHED' : 'VALIDATE'}</span>
           </button>
         </div>
       </div>
@@ -64,19 +64,19 @@ export const DeliveryDetailView: React.FC = () => {
         <div className="font-label-md text-label-md flex items-center gap-3 tracking-widest uppercase">
           <span className="text-tertiary">Draft</span>
           <span className="text-outline-variant select-none">—</span>
-          <span className={`font-semibold pb-1 ${delivery.status !== 'DONE' ? 'text-on-surface border-b-2 border-primary-container' : 'text-tertiary'}`}>
+          <span className={`font-semibold pb-1 ${delivery?.status !== 'DONE' ? 'text-on-surface border-b-2 border-primary-container' : 'text-tertiary'}`}>
             Ready
           </span>
           <span className="text-outline-variant select-none">—</span>
-          <span className={`font-semibold pb-1 ${delivery.status === 'DONE' ? 'text-[#3F6B4A] dark:text-[#68a377] border-b-2 border-[#3F6B4A]' : 'text-secondary select-none'}`}>
+          <span className={`font-semibold pb-1 ${delivery?.status === 'DONE' ? 'text-[#3F6B4A] dark:text-[#68a377] border-b-2 border-[#3F6B4A]' : 'text-secondary select-none'}`}>
             Done
           </span>
         </div>
         <div className="hidden sm:flex items-center gap-2 font-label-sm text-label-sm text-tertiary uppercase">
-          <span>STATUS CODE: {delivery.statusCode}</span>
+          <span>STATUS CODE: {delivery?.statusCode || 'N/A'}</span>
           <span className="text-outline-variant">/</span>
           <span className="text-primary-container dark:text-primary font-semibold">
-            {delivery.stageName}
+            {delivery?.stageName || 'N/A'}
           </span>
         </div>
       </div>
@@ -89,10 +89,10 @@ export const DeliveryDetailView: React.FC = () => {
             DELIVERY ADDRESS
           </span>
           <div className="font-body-lg text-body-lg text-on-surface font-medium">
-            {delivery.deliveryAddress}
+            {delivery?.deliveryAddress || 'N/A'}
           </div>
           <span className="font-label-sm text-label-sm text-secondary tracking-widest uppercase font-mono">
-            COORDINATES: {delivery.coordinates}
+            COORDINATES: {delivery?.coordinates || 'N/A'}
           </span>
         </div>
 
@@ -102,10 +102,10 @@ export const DeliveryDetailView: React.FC = () => {
             OPERATION TYPE
           </span>
           <div className="font-label-lg text-label-lg text-on-surface tracking-wider font-semibold">
-            {delivery.operationType}
+            {delivery?.operationType || 'N/A'}
           </div>
           <span className="font-label-sm text-label-sm text-secondary tracking-widest uppercase font-mono">
-            {delivery.routing}
+            {delivery?.routing || 'N/A'}
           </span>
         </div>
       </div>
@@ -120,7 +120,7 @@ export const DeliveryDetailView: React.FC = () => {
           <label className="flex items-center group cursor-pointer select-none">
             <input
               type="checkbox"
-              checked={delivery.pickVerified}
+              checked={delivery?.pickVerified || false}
               onChange={() => toggleDeliveryChecklist('pick')}
               className="sr-only peer"
             />
@@ -134,12 +134,12 @@ export const DeliveryDetailView: React.FC = () => {
             </span>
             <span
               className={`font-label-sm text-label-sm tracking-widest uppercase ${
-                delivery.pickVerified
+                delivery?.pickVerified
                   ? 'text-primary-container dark:text-primary font-semibold'
                   : 'text-tertiary'
               }`}
             >
-              [{delivery.pickVerifiedTime}]
+              [{delivery?.pickVerifiedTime || 'PENDING'}]
             </span>
           </label>
 
@@ -147,7 +147,7 @@ export const DeliveryDetailView: React.FC = () => {
           <label className="flex items-center group cursor-pointer select-none">
             <input
               type="checkbox"
-              checked={delivery.packInspected}
+              checked={delivery?.packInspected || false}
               onChange={() => toggleDeliveryChecklist('pack')}
               className="sr-only peer"
             />
@@ -161,12 +161,12 @@ export const DeliveryDetailView: React.FC = () => {
             </span>
             <span
               className={`font-label-sm text-label-sm tracking-widest uppercase ${
-                delivery.packInspected
+                delivery?.packInspected
                   ? 'text-primary-container dark:text-primary font-semibold'
                   : 'text-tertiary'
               }`}
             >
-              [{delivery.packInspectedTime}]
+              [{delivery?.packInspectedTime || 'PENDING'}]
             </span>
           </label>
         </div>
@@ -203,7 +203,7 @@ export const DeliveryDetailView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-rule font-body-md text-body-md text-on-surface">
-              {delivery.items.map((item, idx) => (
+              {delivery?.items?.map((item, idx) => (
                 <tr key={idx} className="hover:bg-surface-container transition-colors duration-75">
                   <td className="py-3 px-3">
                     <div className="font-body-md text-body-md font-medium text-on-surface">
@@ -235,10 +235,10 @@ export const DeliveryDetailView: React.FC = () => {
         {/* Tally Subtext & Aggregate Calculation */}
         <div className="mt-4 pt-3 border-t border-rule flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-label-md text-label-md text-tertiary">
           <div className="uppercase tracking-wider">
-            CARGO GROSS MASS: {delivery.grossMass} · NET VOLUME: {delivery.netVolume}
+            CARGO GROSS MASS: {delivery?.grossMass || '0'} · NET VOLUME: {delivery?.netVolume || '0'}
           </div>
           <div className="uppercase tracking-wider text-on-surface font-semibold">
-            TOTAL TALLY ENTRIES: {delivery.items.length} POSITION UNITS
+            TOTAL TALLY ENTRIES: {delivery?.items?.length || 0} POSITION UNITS
           </div>
         </div>
       </div>
