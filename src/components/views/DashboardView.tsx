@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 
 export const DashboardView: React.FC = () => {
-  const { setCurrentScreen, setSelectedReceiptId, products, receipts } = useApp();
+  const { setCurrentScreen, setSelectedReceiptId, products, receipts, delivery } = useApp();
   const [utcTime, setUtcTime] = useState<string>('');
 
   useEffect(() => {
