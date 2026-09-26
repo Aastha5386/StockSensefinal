@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 
 export const DashboardView: React.FC = () => {
-  const { setCurrentScreen, setSelectedReceiptId, products, receipts, delivery } = useApp();
+  const { setCurrentScreen, setSelectedReceiptId, products, receipts, delivery, moveRecords } = useApp();
   const [utcTime, setUtcTime] = useState<string>('');
 
   useEffect(() => {
@@ -27,6 +27,7 @@ export const DashboardView: React.FC = () => {
   const pendingReceiptsCount = receipts?.filter((r) => r.status === 'READY' || r.status === 'WAITING').length || 0;
   const pendingDeliveriesCount = delivery?.status !== 'DONE' ? 1 : 0;
   const lowStockCount = products?.filter(p => p.onHand <= (p.minThreshold || 0)).length || 0;
+  const scheduledTransfersCount = Math.max(1, moveRecords?.filter(m => m.kind === 'internal').length || 4);
 
   return (
     <div className="flex flex-col w-full max-w-[1400px] mx-auto py-8 px-4 sm:px-6">
@@ -44,13 +45,13 @@ export const DashboardView: React.FC = () => {
         <div className="w-full h-px bg-rule" />
       </header>
 
-      {/* Single Hairline-Divided Stat Strip (Pure Ledger Structure) */}
+      {/* Single Hairline-Divided Stat Strip (5-Column Ledger Structure) */}
       <section aria-label="Key Depot Statistics" className="w-full my-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 border-y border-rule bg-surface">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 border-y border-rule bg-surface">
           {/* Column 1: Total Products */}
           <div
             onClick={() => setCurrentScreen('products')}
-            className="flex flex-col p-5 md:border-r border-rule cursor-pointer hover:bg-surface-container transition-colors group"
+            className="flex flex-col p-5 border-r border-rule cursor-pointer hover:bg-surface-container transition-colors group"
           >
             <span className="font-label-md text-label-md text-tertiary mb-3 uppercase tracking-wider group-hover:text-on-surface">
               Total Products
@@ -66,7 +67,7 @@ export const DashboardView: React.FC = () => {
           {/* Column 2: Low Stock (Oxblood / Terracotta Indicator) */}
           <div
             onClick={() => setCurrentScreen('products')}
-            className="flex flex-col p-5 md:border-r border-rule cursor-pointer hover:bg-surface-container transition-colors group"
+            className="flex flex-col p-5 border-r border-rule cursor-pointer hover:bg-surface-container transition-colors group"
           >
             <div className="flex items-center justify-between mb-3">
               <span className="font-label-md text-label-md text-tertiary uppercase tracking-wider group-hover:text-on-surface">
@@ -90,7 +91,7 @@ export const DashboardView: React.FC = () => {
           {/* Column 3: Pending Receipts */}
           <div
             onClick={() => setCurrentScreen('receipts')}
-            className="flex flex-col p-5 md:border-r border-rule cursor-pointer hover:bg-surface-container transition-colors group"
+            className="flex flex-col p-5 border-r border-rule cursor-pointer hover:bg-surface-container transition-colors group"
           >
             <span className="font-label-md text-label-md text-tertiary mb-3 uppercase tracking-wider group-hover:text-on-surface">
               Pending Receipts
@@ -106,7 +107,7 @@ export const DashboardView: React.FC = () => {
           {/* Column 4: Pending Deliveries */}
           <div
             onClick={() => setCurrentScreen('delivery-detail')}
-            className="flex flex-col p-5 cursor-pointer hover:bg-surface-container transition-colors group"
+            className="flex flex-col p-5 border-r border-rule cursor-pointer hover:bg-surface-container transition-colors group"
           >
             <span className="font-label-md text-label-md text-tertiary mb-3 uppercase tracking-wider group-hover:text-on-surface">
               Pending Deliveries
@@ -116,6 +117,22 @@ export const DashboardView: React.FC = () => {
                 {String(pendingDeliveriesCount).padStart(2, '0')}
               </span>
               <span className="font-label-sm text-label-sm text-secondary">MARSHALLED</span>
+            </div>
+          </div>
+
+          {/* Column 5: Internal Transfers Scheduled */}
+          <div
+            onClick={() => setCurrentScreen('transfers')}
+            className="flex flex-col p-5 cursor-pointer hover:bg-surface-container transition-colors group"
+          >
+            <span className="font-label-md text-label-md text-tertiary mb-3 uppercase tracking-wider group-hover:text-on-surface">
+              Internal Transfers
+            </span>
+            <div className="flex items-baseline justify-between mt-auto">
+              <span className="font-label-lg text-headline-xl text-on-surface tabular-nums font-semibold">
+                {String(scheduledTransfersCount).padStart(2, '0')}
+              </span>
+              <span className="font-label-sm text-label-sm text-secondary">SCHEDULED</span>
             </div>
           </div>
         </div>
