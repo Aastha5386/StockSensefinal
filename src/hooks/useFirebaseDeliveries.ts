@@ -45,7 +45,8 @@ export const useFirebaseDeliveries = () => {
 
         // Decrease inventory for each item
         for (const item of delivery.items) {
-          const productRef = doc(collection(db, 'products'), item.sku);
+          const docId = item.sku.replace(/\//g, '--');
+          const productRef = doc(collection(db, 'products'), docId);
           const productSnap = await transaction.get(productRef);
           
           if (!productSnap.exists()) {

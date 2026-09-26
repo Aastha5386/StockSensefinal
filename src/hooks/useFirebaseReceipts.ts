@@ -78,7 +78,8 @@ export const useFirebaseReceipts = () => {
           // Find the product by SKU
           // Note: In a robust schema, we'd query by SKU, but transaction queries are tricky.
           // We will assume product doc ID === product.sku for atomic updates.
-          const productRef = doc(collection(db, 'products'), item.sku);
+          const docId = item.sku.replace(/\//g, '--');
+          const productRef = doc(collection(db, 'products'), docId);
           const productSnap = await transaction.get(productRef);
           
           if (!productSnap.exists()) {
