@@ -152,7 +152,7 @@ export const LoginView: React.FC = () => {
                             (window as any).recaptchaVerifier.clear();
                             (window as any).recaptchaVerifier = undefined;
                           }
-                          alert("Failed to send SMS. Make sure the phone number includes the country code (e.g. +1).");
+                          showToast("SMS DISPATCH FAILED: Ensure phone number includes country code (+1)");
                         }
                       }}
                       className="w-full mt-2 h-10 bg-primary-container hover:bg-[#8E4217] text-white font-label-lg tracking-wider uppercase rounded-[2px] transition-colors"
@@ -191,7 +191,7 @@ export const LoginView: React.FC = () => {
                           });
                         }
                       } catch (error) {
-                        alert("Invalid code.");
+                        showToast("INVALID VERIFICATION CODE: Please check SMS code.");
                       }
                     }}
                     className="w-full mt-2 h-10 bg-primary-container hover:bg-[#8E4217] text-white font-label-lg tracking-wider uppercase rounded-[2px] transition-colors"

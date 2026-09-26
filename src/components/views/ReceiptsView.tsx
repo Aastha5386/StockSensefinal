@@ -5,7 +5,7 @@ import { OperationalStatus, Receipt } from '../../types';
 import { NewReceiptModal } from '../modals/NewReceiptModal';
 
 export const ReceiptsView: React.FC = () => {
-  const { receipts, setCurrentScreen, setSelectedReceiptId, updateReceiptStatus } = useApp();
+  const { receipts, setCurrentScreen, setSelectedReceiptId, updateReceiptStatus, showToast } = useApp();
   const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'archive'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortAsc, setSortAsc] = useState(false);
@@ -375,8 +375,8 @@ export const ReceiptsView: React.FC = () => {
             <span className="text-outline">/</span>
             <span className="text-tertiary">3</span>
             <button
-              onClick={() => alert('No additional ledger sheet archives present in current depot.')}
-              className="ml-2 text-primary-container hover:underline uppercase tracking-wider font-label-sm text-label-sm"
+              onClick={() => showToast('ALL INBOUND RECEIPTS LOADED ON CURRENT SHEET')}
+              className="ml-2 text-primary-container hover:underline uppercase tracking-wider font-label-sm text-label-sm cursor-pointer"
             >
               NEXT SHEET →
             </button>
