@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ASSET_IMAGES } from '../../data/initialData';
 import { StatusIndicator } from '../common/StatusIndicator';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { storage, db } from '../../lib/firebase';
 
 interface ParcelItem {
   index: string;
@@ -73,51 +76,163 @@ export const ProfileStationView: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(userProfile?.name || '');
   const [editAvatarUrl, setEditAvatarUrl] = useState(userProfile?.avatarUrl || '');
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userProfile?.id) return;
+    setUploading(true);
+    try {
+      const storageRef = ref(storage, `avatars/${userProfile.id}_${Date.now()}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setEditAvatarUrl(url);
+      showToast("PHOTO UPLOADED SUCCESSFULLY");
+    } catch (err: any) {
+      showToast(`FAILED TO UPLOAD PHOTO: ${err.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const requestRoleChange = async () => {
+    if (!userProfile?.id) return;
+    try {
+      await addDoc(collection(db, 'role_requests'), {
+        userId: userProfile.id,
+        name: userProfile.name,
+        currentRole: userProfile.role,
+        requestedRole: 'admin',
+        status: 'pending',
+        timestamp: serverTimestamp()
+      });
+      showToast("ROLE CHANGE REQUEST SENT TO ADMIN");
+    } catch (err: any) {
+      showToast("FAILED TO SEND ROLE REQUEST");
+    }
+  };
 
   return (
     <div className="w-full max-w-[1440px] mx-auto pb-16 pt-2 px-4 sm:px-6 flex flex-col gap-6">
-      {/* Top Utility Context Bar / Sub-Header Strip */}
-      <div className="flex flex-wrap items-center justify-between py-2 border-b border-rule gap-3">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="font-label-md text-label-md text-secondary uppercase tracking-widest">
-            // STATION TERMINAL · BAY-03
-          </span>
-          <div className="w-1.5 h-1.5 bg-primary-container" />
-          <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-            REGISTRY: WAREHOUSE-NORTH
-          </span>
-          <span className="font-label-sm text-label-sm text-secondary uppercase px-1.5 py-0.5 bg-surface-low border border-rule">
-            SYS_OK · LATENCY 14ms
-          </span>
+      {/* Profile & Account Settings Card */}
+      <div className="bg-surface-low border border-rule p-5 sm:p-8 flex flex-col md:flex-row gap-6 sm:gap-10 items-start">
+        {/* Avatar Section */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative group w-24 h-24 rounded-full overflow-hidden border-2 border-primary-container/50 bg-surface-lowest">
+            <img 
+              src={editAvatarUrl || ASSET_IMAGES.avatar} 
+              alt="User Avatar"
+              className="w-full h-full object-cover" 
+            />
+            {isEditing && (
+              <label 
+                className={`absolute inset-0 flex flex-col items-center justify-center transition-colors cursor-pointer ${uploading ? 'bg-black/80' : 'bg-black/60 hover:bg-black/80'}`}
+                title="Upload a new photo"
+              >
+                {uploading ? (
+                  <span className="material-symbols-outlined text-white text-[24px] animate-spin">refresh</span>
+                ) : (
+                  <span className="material-symbols-outlined text-white text-[24px]">photo_camera</span>
+                )}
+                <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={uploading} />
+              </label>
+            )}
+          </div>
+          {isEditing && (
+            <input 
+               type="text"
+               value={editAvatarUrl}
+               onChange={e => setEditAvatarUrl(e.target.value)}
+               placeholder="Or paste image URL..."
+               className="bg-surface-lowest border border-rule text-on-surface font-body-sm text-body-sm px-2 py-1.5 w-full max-w-[200px] rounded-[2px] outline-none focus:border-primary-container"
+            />
+          )}
         </div>
 
-        {/* Station User Tag */}
-        <div className="flex items-center gap-2 font-label-md text-label-md uppercase text-secondary">
-          <span>USER:</span>
-          {isEditing ? (
-            <div className="flex items-center gap-2">
-              <input 
-                value={editName}
-                onChange={e => setEditName(e.target.value)}
-                className="bg-surface-lowest text-on-surface border border-rule px-2 py-1 outline-none font-body-sm normal-case w-32 h-7"
-                placeholder="Name"
-              />
-              <input 
-                value={editAvatarUrl}
-                onChange={e => setEditAvatarUrl(e.target.value)}
-                className="bg-surface-lowest text-on-surface border border-rule px-2 py-1 outline-none font-body-sm normal-case w-48 h-7"
-                placeholder="Avatar URL"
-              />
-              <button onClick={() => { updateProfile(editName, editAvatarUrl); setIsEditing(false); }} className="px-2 py-1 bg-primary-container text-white text-xs h-7 rounded-[2px]">Save</button>
-              <button onClick={() => setIsEditing(false)} className="px-2 py-1 border border-rule text-on-surface text-xs h-7 rounded-[2px]">Cancel</button>
+        {/* Details Section */}
+        <div className="flex-1 w-full flex flex-col gap-5">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div>
+              <h2 className="font-headline-md text-headline-md font-semibold text-on-surface">Account Profile</h2>
+              <p className="font-body-sm text-body-sm text-secondary mt-0.5">Manage your personal information and station credentials.</p>
             </div>
-          ) : (
-            <>
-              <span className="font-bold text-on-surface">{userProfile?.name || 'User'}</span>
-              <span className="text-tertiary">[{userProfile?.email || ''}]</span>
-              <button onClick={() => setIsEditing(true)} className="ml-2 text-primary-container hover:underline lowercase text-xs">edit</button>
-            </>
-          )}
+            {!isEditing ? (
+              <button 
+                onClick={() => setIsEditing(true)} 
+                className="flex items-center justify-center gap-2 text-primary-container hover:bg-primary-container/10 px-4 py-2 border border-primary-container/30 rounded-[2px] transition-colors font-label-md text-label-md uppercase font-semibold"
+              >
+                <span className="material-symbols-outlined text-[18px]">edit</span>
+                <span>Edit Profile</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setIsEditing(false)} 
+                  className="px-4 py-2 border border-rule text-secondary hover:text-on-surface hover:bg-surface-variant/30 transition-colors font-label-md text-label-md uppercase rounded-[2px]"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={async () => { 
+                    try {
+                      await updateProfile(editName, editAvatarUrl); 
+                      setIsEditing(false); 
+                    } catch (err) {
+                      showToast("Error updating profile");
+                    }
+                  }} 
+                  className="px-4 py-2 bg-primary-container text-white transition-colors hover:bg-[#8E4217] font-label-md text-label-md uppercase font-semibold rounded-[2px] flex items-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[18px]">save</span>
+                  <span>Save Changes</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+             <div className="flex flex-col gap-1.5">
+                <label className="font-label-sm text-label-sm uppercase text-secondary tracking-wider">Full Name</label>
+                {isEditing ? (
+                  <input 
+                    type="text" 
+                    value={editName} 
+                    onChange={e => setEditName(e.target.value)} 
+                    className="h-10 px-3 bg-surface-lowest border border-rule text-on-surface outline-none focus:border-primary-container rounded-[2px]"
+                  />
+                ) : (
+                  <div className="h-10 px-3 flex items-center bg-surface-lowest border border-rule/30 text-on-surface font-medium rounded-[2px]">
+                    {userProfile?.name || 'User'}
+                  </div>
+                )}
+             </div>
+             
+             <div className="flex flex-col gap-1.5">
+                <label className="font-label-sm text-label-sm uppercase text-secondary tracking-wider">Email / Phone</label>
+                <div className="h-10 px-3 flex items-center bg-surface-variant/20 border border-rule/30 text-secondary cursor-not-allowed rounded-[2px]">
+                  {userProfile?.email || 'N/A'}
+                </div>
+                {isEditing && (
+                  <span className="text-[11px] text-tertiary">Contact admin to change contact info.</span>
+                )}
+             </div>
+
+             <div className="flex flex-col gap-1.5">
+                <label className="font-label-sm text-label-sm uppercase text-secondary tracking-wider">System Role</label>
+                <div className="h-10 px-3 flex items-center justify-between bg-surface-variant/20 border border-rule/30 text-primary-container font-semibold uppercase rounded-[2px]">
+                  <span>{userProfile?.role?.replace('_', ' ') || 'Guest'}</span>
+                  {isEditing && (
+                    <button 
+                      onClick={requestRoleChange}
+                      className="text-[11px] underline hover:opacity-80"
+                      title="Request Admin access"
+                    >
+                      Request Change
+                    </button>
+                  )}
+                </div>
+             </div>
+          </div>
         </div>
       </div>
 
