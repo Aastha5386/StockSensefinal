@@ -90,27 +90,37 @@ export const LoginView: React.FC = () => {
                       className="w-full h-9 px-3 bg-surface-lowest text-on-surface font-body-md text-body-md border border-rule rounded-[2px] outline-none transition-colors placeholder:text-tertiary focus:border-primary-container"
                     />
                   </div>
-                  <div id="recaptcha-container"></div>
-                  <button
-                    onClick={async () => {
-                      try {
-                        if (!window.recaptchaVerifier) {
-                          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                            size: 'invisible'
-                          });
+                    <div id="recaptcha-container"></div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          if (!window.recaptchaVerifier) {
+                            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                              size: 'invisible',
+                              callback: (response: any) => {
+                                // reCAPTCHA solved
+                              }
+                            });
+                          }
+                          const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+                          const confirmation = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
+                          setConfirmationResult(confirmation);
+                        } catch (error) {
+                          console.error('Phone auth error:', error);
+                          // Reset reCAPTCHA so they can try again
+                          if (window.recaptchaVerifier) {
+                            window.recaptchaVerifier.clear();
+                            window.recaptchaVerifier = undefined;
+                          }
+                          alert("Failed to send SMS. Make sure the phone number includes the country code (e.g. +1).");
                         }
-                        const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
-                        setConfirmationResult(confirmation);
-                      } catch (error) {
-                        console.error(error);
-                        alert("Failed to send SMS.");
-                      }
-                    }}
-                    className="w-full mt-2 h-10 bg-primary-container hover:bg-[#8E4217] text-white font-label-lg tracking-wider uppercase rounded-[2px] transition-colors"
-                  >
-                    Send OTP
-                  </button>
-                 </>
+                      }}
+                      className="w-full mt-2 h-10 bg-primary-container hover:bg-[#8E4217] text-white font-label-lg tracking-wider uppercase rounded-[2px] transition-colors"
+                    >
+                      Send OTP
+                    </button>
+                   </>
                ) : (
                  <>
                   <div className="flex flex-col gap-1.5">
@@ -127,6 +137,7 @@ export const LoginView: React.FC = () => {
                     />
                   </div>
                   <button
+                    type="button"
                     onClick={async () => {
                       try {
                         const res = await confirmationResult.confirm(verificationCode);
