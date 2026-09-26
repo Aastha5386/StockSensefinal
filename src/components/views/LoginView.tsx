@@ -78,6 +78,32 @@ export const LoginView: React.FC = () => {
                {!confirmationResult ? (
                  <>
                   <div className="flex flex-col gap-1.5">
+                    <label className="font-label-md text-label-md uppercase text-secondary tracking-wider" htmlFor="phone-first-name">
+                      First Name
+                    </label>
+                    <input
+                      id="phone-first-name"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Jane"
+                      className="w-full h-9 px-3 bg-surface-lowest text-on-surface font-body-md text-body-md border border-rule rounded-[2px] outline-none transition-colors placeholder:text-tertiary focus:border-primary-container"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-label-md text-label-md uppercase text-secondary tracking-wider" htmlFor="phone-last-name">
+                      Last Name
+                    </label>
+                    <input
+                      id="phone-last-name"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Doe"
+                      className="w-full h-9 px-3 bg-surface-lowest text-on-surface font-body-md text-body-md border border-rule rounded-[2px] outline-none transition-colors placeholder:text-tertiary focus:border-primary-container"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
                     <label className="font-label-md text-label-md uppercase text-secondary tracking-wider" htmlFor="phone-number">
                       Phone Number
                     </label>
@@ -145,6 +171,8 @@ export const LoginView: React.FC = () => {
                         if (!userDoc.exists()) {
                           await setDoc(doc(db, 'users', res.user.uid), {
                             email: res.user.phoneNumber,
+                            firstName,
+                            lastName,
                             role: 'warehouse_staff',
                             createdAt: new Date().toISOString()
                           });

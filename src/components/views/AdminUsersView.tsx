@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { changeUserRole, UserRole } from '../../lib/auth';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
 interface UserData {
   uid: string;
+  name: string;
   email: string;
   role: UserRole;
 }
@@ -20,11 +21,16 @@ export const AdminUsersView: React.FC = () => {
       const fetchUsers = async () => {
         try {
           const snapshot = await getDocs(collection(db, 'users'));
-          const usersList = snapshot.docs.map(doc => ({
-            uid: doc.id,
-            email: doc.data().email || 'Unknown',
-            role: (doc.data().role as UserRole) || 'warehouse_staff'
-          }));
+          const usersList = snapshot.docs.map(doc => {
+            const data = doc.data();
+            const name = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Unknown';
+            return {
+              uid: doc.id,
+              name,
+              email: data.email || 'Unknown',
+              role: (data.role as UserRole) || 'warehouse_staff'
+            };
+          });
           setUsers(usersList);
         } catch (e) {
           console.error("Failed to fetch users", e);
@@ -59,6 +65,18 @@ export const AdminUsersView: React.FC = () => {
     }
   };
 
+  const handleDeleteUser = async (uid: string) => {
+    if (!window.confirm("Are you sure you want to delete this user profile?")) return;
+    try {
+      showToast("DELETING USER PROFILE...");
+      await deleteDoc(doc(db, 'users', uid));
+      setUsers(users.filter(u => u.uid !== uid));
+      showToast("USER PROFILE DELETED");
+    } catch (err: any) {
+      showToast(`FAILED TO DELETE: ${err.message}`);
+    }
+  };
+
   return (
     <div className="flex flex-col w-full max-w-[1400px] mx-auto py-8 px-4 sm:px-6">
       <header className="mb-8">
@@ -74,18 +92,21 @@ export const AdminUsersView: React.FC = () => {
           <thead>
             <tr className="border-b border-rule">
               <th className="py-2 px-4 font-label-md text-secondary">User ID</th>
-              <th className="py-2 px-4 font-label-md text-secondary">Email</th>
+              <th className="py-2 px-4 font-label-md text-secondary">Name</th>
+              <th className="py-2 px-4 font-label-md text-secondary">Email / Phone</th>
               <th className="py-2 px-4 font-label-md text-secondary">Role</th>
+              <th className="py-2 px-4 font-label-md text-secondary text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.map(u => (
               <tr key={u.uid} className="border-b border-rule hover:bg-surface-lowest">
-                <td className="py-3 px-4 font-body-sm">{u.uid}</td>
+                <td className="py-3 px-4 font-body-sm text-secondary font-mono text-[11px]">{u.uid}</td>
+                <td className="py-3 px-4 font-body-sm font-semibold">{u.name}</td>
                 <td className="py-3 px-4 font-body-sm">{u.email}</td>
                 <td className="py-3 px-4">
                   <select
-                    className="bg-surface border border-rule px-2 py-1 text-sm rounded outline-none"
+                    className="bg-surface border border-rule px-2 py-1 text-sm rounded outline-none cursor-pointer"
                     value={u.role}
                     onChange={(e) => handleRoleChange(u.uid, e.target.value as UserRole)}
                   >
@@ -93,6 +114,15 @@ export const AdminUsersView: React.FC = () => {
                     <option value="inventory_manager">Inventory Manager</option>
                     <option value="warehouse_staff">Warehouse Staff</option>
                   </select>
+                </td>
+                <td className="py-3 px-4 text-right">
+                  <button 
+                    onClick={() => handleDeleteUser(u.uid)}
+                    className="p-1.5 text-error hover:bg-error/10 rounded transition-colors"
+                    title="Delete User Profile"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
                 </td>
               </tr>
             ))}
