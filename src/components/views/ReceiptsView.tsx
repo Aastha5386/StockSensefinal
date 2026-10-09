@@ -4,6 +4,21 @@ import { useApp } from '../../context/AppContext';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { OperationalStatus, Receipt } from '../../types';
 import { NewReceiptModal } from '../modals/NewReceiptModal';
+import {
+  Plus,
+  Search,
+  ArrowUpDown,
+  LayoutList,
+  Kanban,
+  Archive,
+  Truck,
+  ArrowRight,
+  Clock,
+  MapPin,
+  CheckCircle2,
+  PackageCheck,
+  AlertCircle,
+} from 'lucide-react';
 
 export const ReceiptsView: React.FC = () => {
   const { receipts, setSelectedReceiptId, updateReceiptStatus, showToast } = useApp();
@@ -38,6 +53,11 @@ export const ReceiptsView: React.FC = () => {
     return list;
   }, [receipts, searchQuery, viewMode, sortAsc]);
 
+  // Metric counts
+  const waitingCount = receipts.filter((r) => r.status === 'WAITING').length;
+  const readyCount = receipts.filter((r) => r.status === 'READY').length;
+  const doneCount = receipts.filter((r) => r.status === 'DONE').length;
+
   const handleRowClick = (receipt: Receipt) => {
     setSelectedReceiptId(receipt.id);
     navigate(`/receipts/${encodeURIComponent(receipt.id)}`);
@@ -59,298 +79,347 @@ export const ReceiptsView: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-[1440px] mx-auto pb-16 pt-6 px-4 sm:px-6">
-      {/* Top Master Ledger Identification */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-rule">
+    <div className="w-full max-w-[1400px] mx-auto pb-16 pt-2 px-4 sm:px-6 space-y-6">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest flex items-center gap-2 mb-1.5">
-            <span>// DEPOT PROTOCOL 04-B</span>
-            <span className="inline-block w-1 h-1 bg-outline" />
-            <span>RCV-INBOUND-LOG // DOCK 04</span>
-          </div>
-          <div className="flex items-baseline gap-4 flex-wrap">
-            <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight font-normal">
-              Receipts
-            </h1>
-            <span className="font-label-md text-label-md text-on-surface-variant">
-              SERIES 2023 · OCT TALLY
-            </span>
-          </div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Inbound Receipts & POs
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            Track incoming supplier shipments, dock intakes, and quality tally verification
+          </p>
         </div>
 
-        {/* Action & Meta Stamp */}
-        <div className="flex items-center gap-4">
-          <div className="hidden lg:flex flex-col text-right">
-            <span className="font-label-sm text-label-sm text-tertiary uppercase">
-              INSPECTOR REGISTER
-            </span>
-            <span className="font-label-md text-label-md text-on-surface font-semibold">
-              OPERATOR #774-K
-            </span>
-          </div>
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setShowNewReceiptModal(true)}
-            className="bg-surface border border-outline-variant hover:border-tertiary text-on-surface font-label-lg text-label-lg px-4 py-2 rounded-[2px] transition-colors duration-150 flex items-center gap-2 tracking-wider cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#6C4CE6] hover:bg-[#5839D6] text-white font-medium text-sm rounded-xl transition-all shadow-sm shadow-[#6C4CE6]/25 cursor-pointer"
           >
-            <span className="font-mono text-primary font-bold">+</span>
-            <span>NEW RECEIPT</span>
+            <Plus className="w-4 h-4" />
+            <span>Create Receipt</span>
           </button>
         </div>
       </div>
 
-      {/* Ledger Control Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 border-b border-on-surface/80">
-        {/* Plain Text Mode Toggle (Underlined Text, Never Pills) */}
-        <div className="flex items-center gap-6">
+      {/* KPI Overview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-[#141124] p-5 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-[#F0EDFD] dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] flex items-center justify-center shrink-0">
+            <Truck className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Total Inbound POs
+            </div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">{receipts.length}</div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#141124] p-5 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <Clock className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Awaiting Inspection
+            </div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">{waitingCount}</div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#141124] p-5 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+            <PackageCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Ready for Dock
+            </div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">{readyCount}</div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#141124] p-5 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Intakes Completed
+            </div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">{doneCount}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Control Bar: View Modes, Search, Filter */}
+      <div className="bg-white dark:bg-[#141124] p-4 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* View switcher tabs */}
+        <div className="flex items-center gap-1 bg-[#F7F5FF] dark:bg-[#1B172E] p-1 rounded-xl border border-[#E8E5F2] dark:border-[#282342]">
           <button
             onClick={() => setViewMode('list')}
-            className={`font-label-lg text-label-lg uppercase tracking-wider pb-1 transition-colors cursor-pointer ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               viewMode === 'list'
-                ? 'text-primary-container dark:text-primary font-semibold border-b-2 border-primary-container'
-                : 'text-secondary hover:text-on-surface border-b-2 border-transparent'
+                ? 'bg-white dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            LIST ({receipts.length})
+            <LayoutList className="w-3.5 h-3.5" />
+            <span>List ({receipts.length})</span>
           </button>
           <button
             onClick={() => setViewMode('kanban')}
-            className={`font-label-lg text-label-lg uppercase tracking-wider pb-1 transition-colors cursor-pointer ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               viewMode === 'kanban'
-                ? 'text-primary-container dark:text-primary font-semibold border-b-2 border-primary-container'
-                : 'text-secondary hover:text-on-surface border-b-2 border-transparent'
+                ? 'bg-white dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            KANBAN
+            <Kanban className="w-3.5 h-3.5" />
+            <span>Kanban Board</span>
           </button>
           <button
             onClick={() => setViewMode('archive')}
-            className={`font-label-lg text-label-lg uppercase tracking-wider pb-1 transition-colors cursor-pointer ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               viewMode === 'archive'
-                ? 'text-primary-container dark:text-primary font-semibold border-b-2 border-primary-container'
-                : 'text-secondary hover:text-on-surface border-b-2 border-transparent'
+                ? 'bg-white dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            ARCHIVE
+            <Archive className="w-3.5 h-3.5" />
+            <span>Archive</span>
           </button>
         </div>
 
-        {/* Manifest Filters & Search */}
+        {/* Search & Sort controls */}
         <div className="flex items-center gap-3">
-          <div className="relative flex items-center">
-            <span className="material-symbols-outlined absolute left-2.5 text-on-surface-variant text-[18px] pointer-events-none">
-              search
-            </span>
+          <div className="relative flex-1 md:w-80">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="FILTER REF, VENDOR OR BAY..."
-              className="bg-surface-lowest border border-outline-variant focus:border-primary text-on-surface placeholder:text-secondary font-label-md text-label-md pl-8 pr-3 py-1.5 rounded-none outline-none w-56 sm:w-72 md:w-80 tracking-wide uppercase transition-colors"
+              placeholder="Filter by ref, supplier, or bay..."
+              className="w-full pl-9 pr-3 py-2 text-sm bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] transition-all text-slate-900 dark:text-white placeholder:text-slate-400"
             />
           </div>
+
           <button
             onClick={() => setSortAsc(!sortAsc)}
-            className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 bg-surface-low border border-outline-variant hover:bg-surface-container text-tertiary font-label-sm text-label-sm uppercase transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] hover:bg-[#F7F5FF] dark:hover:bg-[#252040] transition-colors cursor-pointer"
             title="Toggle sort direction"
           >
-            <span>SORT: {sortAsc ? 'DATE ASC' : 'DATE DESC'}</span>
-            <span className="material-symbols-outlined text-[14px]">swap_vert</span>
+            <ArrowUpDown className="w-3.5 h-3.5 text-[#6C4CE6] dark:text-[#A78BFA]" />
+            <span className="hidden sm:inline">{sortAsc ? 'Ascending' : 'Descending'}</span>
           </button>
         </div>
       </div>
 
       {/* Main View Mode: LIST */}
       {viewMode === 'list' && (
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[780px]">
-            <thead>
-              <tr className="border-b border-on-surface select-none">
-                <th className="py-3 px-3 font-label-md text-label-md text-tertiary uppercase tracking-wider w-12 text-center">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedIds.length === filteredReceipts.length &&
-                      filteredReceipts.length > 0
-                    }
-                    onChange={handleToggleSelectAll}
-                    aria-label="Select all receipts"
-                    className="w-3.5 h-3.5 rounded-none border border-outline bg-surface-lowest text-on-surface accent-on-surface cursor-pointer"
-                  />
-                </th>
-                <th className="py-3 px-4 font-label-md text-label-md text-tertiary uppercase tracking-wider">
-                  Reference
-                </th>
-                <th className="py-3 px-4 font-label-md text-label-md text-tertiary uppercase tracking-wider">
-                  Contact / Forwarder
-                </th>
-                <th className="py-3 px-4 font-label-md text-label-md text-tertiary uppercase tracking-wider">
-                  To Location
-                </th>
-                <th className="py-3 px-4 font-label-md text-label-md text-tertiary uppercase tracking-wider">
-                  Scheduled (UTC)
-                </th>
-                <th className="py-3 px-4 font-label-md text-label-md text-tertiary uppercase tracking-wider text-right pr-6">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-rule font-body-md text-body-md">
-              {filteredReceipts.length > 0 ? (
-                filteredReceipts.map((r) => {
-                  const isLate = r.status === 'LATE';
-                  const isDone = r.status === 'DONE';
-                  const isCancelled = r.status === 'CANCELLED';
-                  const isSelected = selectedIds.includes(r.id);
+        <div className="bg-white dark:bg-[#141124] rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[760px]">
+              <thead>
+                <tr className="border-b border-[#E8E5F2] dark:border-[#282342] bg-[#FAF9FD] dark:bg-[#1B172E] text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                  <th className="py-3 px-4 w-12 text-center">
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedIds.length === filteredReceipts.length &&
+                        filteredReceipts.length > 0
+                      }
+                      onChange={handleToggleSelectAll}
+                      aria-label="Select all receipts"
+                      className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-[#6C4CE6] focus:ring-[#6C4CE6]/20 cursor-pointer"
+                    />
+                  </th>
+                  <th className="py-3.5 px-4">Receipt Reference</th>
+                  <th className="py-3.5 px-4">Supplier / Forwarder</th>
+                  <th className="py-3.5 px-4">Destination Bay</th>
+                  <th className="py-3.5 px-4">Scheduled Arrival</th>
+                  <th className="py-3.5 px-4 text-center">Status</th>
+                  <th className="py-3.5 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E8E5F2] dark:divide-[#282342] text-sm text-slate-700 dark:text-slate-300">
+                {filteredReceipts.length > 0 ? (
+                  filteredReceipts.map((r) => {
+                    const isSelected = selectedIds.includes(r.id);
 
-                  return (
-                    <tr
-                      key={r.id}
-                      onClick={() => handleRowClick(r)}
-                      className={`transition-colors duration-75 group cursor-pointer ${
-                        isSelected
-                          ? 'bg-surface-container'
-                          : isLate
-                          ? 'hover:bg-surface-container-low bg-error-container/10'
-                          : isCancelled
-                          ? 'hover:bg-surface-container-low opacity-70'
-                          : 'hover:bg-surface-container-low'
-                      }`}
-                    >
-                      <td className="py-3 px-3 text-center" onClick={(e) => handleToggleSelectRow(r.id, e)}>
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {}}
-                          aria-label={`Select receipt ${r.id}`}
-                          className="w-3.5 h-3.5 rounded-none border border-outline bg-surface-lowest accent-on-surface cursor-pointer"
-                        />
-                      </td>
-                      <td
-                        className={`py-3 px-4 font-label-lg text-label-lg font-semibold group-hover:underline ${
-                          isCancelled
-                            ? 'text-secondary line-through'
-                            : isDone
-                            ? 'text-on-surface'
-                            : 'text-primary-container dark:text-primary'
+                    return (
+                      <tr
+                        key={r.id}
+                        onClick={() => handleRowClick(r)}
+                        className={`transition-colors cursor-pointer group ${
+                          isSelected
+                            ? 'bg-[#F0EDFD]/40 dark:bg-[#252040]/50'
+                            : 'hover:bg-[#FAF9FD] dark:hover:bg-[#1B172E]/60'
                         }`}
                       >
-                        {r.id}
-                      </td>
-                      <td className="py-3 px-4 font-body-md text-body-md text-on-surface">
-                        {r.contact}{' '}
-                        {r.carrierCode && (
-                          <span className="text-secondary font-label-sm text-label-sm ml-1 font-mono">
-                            // {r.carrierCode}
+                        <td
+                          className="py-3 px-4 text-center"
+                          onClick={(e) => handleToggleSelectRow(r.id, e)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}}
+                            aria-label={`Select receipt ${r.id}`}
+                            className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-[#6C4CE6] focus:ring-[#6C4CE6]/20 cursor-pointer"
+                          />
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white group-hover:text-[#6C4CE6] dark:group-hover:text-[#A78BFA] transition-colors">
+                          <div className="flex items-center gap-2">
+                            <span>{r.id}</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 font-normal">
+                              ({r.reference})
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium">
+                          {r.contact}
+                          {r.carrierCode && (
+                            <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500 font-mono">
+                              · {r.carrierCode}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
+                          <span className="inline-flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                            {r.toLocation}
                           </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 font-label-md text-label-md text-tertiary uppercase">
-                        {r.toLocation}
-                      </td>
-                      <td className="py-3 px-4 font-label-md text-label-md text-on-surface tabular-nums">
-                        {r.scheduledUtc}
-                      </td>
-                      <td className="py-3 px-4 pr-6 text-right">
-                        <StatusIndicator status={r.status} />
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-secondary font-label-md">
-                    // NO INBOUND RECEIPTS RECORDED UNDER CURRENT SPEC //
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                        </td>
+                        <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">
+                          {r.scheduledUtc}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <StatusIndicator status={r.status} />
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#6C4CE6] dark:text-[#A78BFA] group-hover:translate-x-0.5 transition-transform">
+                            <span>Inspect</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-400 dark:text-slate-500">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <AlertCircle className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                        <span className="text-sm font-medium">No matching receipts found</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500">Try adjusting your filters or search keywords</span>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Table Footer */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-[#E8E5F2] dark:border-[#282342] bg-[#FAF9FD] dark:bg-[#1B172E] text-xs text-slate-500 dark:text-slate-400">
+            <div>
+              Showing <span className="font-semibold text-slate-700 dark:text-slate-200">{filteredReceipts.length}</span> of{' '}
+              <span className="font-semibold text-slate-700 dark:text-slate-200">{receipts.length}</span> inbound receipts
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+              <span>Dock terminal synchronized</span>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Alternate View Mode: KANBAN BOARD */}
       {viewMode === 'kanban' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
           {(['DRAFT', 'WAITING', 'READY', 'DONE'] as OperationalStatus[]).map((colStatus) => {
             const colItems = receipts.filter((r) => r.status === colStatus);
+
+            const badgeStyles =
+              colStatus === 'WAITING'
+                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900/50'
+                : colStatus === 'READY'
+                ? 'bg-[#F0EDFD] dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] border-[#6C4CE6]/25 dark:border-[#383256]'
+                : colStatus === 'DONE'
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+
             return (
               <div
                 key={colStatus}
-                className="bg-surface-low border border-rule p-3 flex flex-col gap-3"
+                className="bg-[#FAF9FD] dark:bg-[#18152B] border border-[#E8E5F2] dark:border-[#282342] rounded-2xl p-4 flex flex-col gap-3"
               >
-                <div className="flex items-center justify-between pb-2 border-b border-rule">
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className="w-[3px] h-3 inline-block"
-                      style={{
-                        backgroundColor:
-                          colStatus === 'WAITING'
-                            ? '#B98424'
-                            : colStatus === 'READY'
-                            ? '#A8501E'
-                            : colStatus === 'DONE'
-                            ? '#3F6B4A'
-                            : '#9C9382',
-                      }}
-                    />
-                    <span className="font-label-md text-label-md uppercase font-semibold text-on-surface">
-                      {colStatus}
-                    </span>
-                  </div>
-                  <span className="font-label-sm text-label-sm text-secondary font-mono">
-                    [{colItems.length}]
+                <div className="flex items-center justify-between pb-3 border-b border-[#E8E5F2] dark:border-[#282342]">
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badgeStyles}`}>
+                    {colStatus === 'DONE' ? 'COMPLETED' : colStatus}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 font-mono">
+                    {colItems.length}
                   </span>
                 </div>
 
-                <div className="flex flex-col gap-2 min-h-[300px]">
+                <div className="flex flex-col gap-3 min-h-[360px]">
                   {colItems.map((item) => (
                     <div
                       key={item.id}
                       onClick={() => handleRowClick(item)}
-                      className="p-3 bg-surface-lowest border border-rule hover:border-on-surface transition-colors cursor-pointer flex flex-col gap-1.5 shadow-2xs group"
+                      className="p-4 bg-white dark:bg-[#141124] rounded-xl border border-[#E8E5F2] dark:border-[#282342] hover:border-[#6C4CE6]/40 dark:hover:border-[#A78BFA]/40 hover:shadow-md transition-all cursor-pointer flex flex-col gap-2 group"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-label-md text-label-md font-bold text-primary-container dark:text-primary group-hover:underline">
+                        <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#6C4CE6] dark:group-hover:text-[#A78BFA] transition-colors">
                           {item.id}
                         </span>
-                        <span className="font-label-sm text-[10px] text-tertiary">
+                        <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-[#1B172E] px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-[#282342]">
                           {item.items.length} SKUs
                         </span>
                       </div>
-                      <div className="font-body-md text-body-md text-on-surface font-medium line-clamp-1">
+
+                      <div className="text-sm text-slate-700 dark:text-slate-300 font-medium line-clamp-1">
                         {item.contact}
                       </div>
-                      <div className="font-label-sm text-label-sm text-secondary">
-                        {item.toLocation}
+
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate">{item.toLocation}</span>
                       </div>
-                      <div className="flex items-center justify-between pt-1 border-t border-rule/60 text-[10px] font-label-sm text-tertiary">
-                        <span>{item.scheduledUtc.split('//')[0]}</span>
-                        <div className="flex items-center gap-1">
-                          {colStatus !== 'DONE' && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const nextMap: Record<string, OperationalStatus> = {
-                                  DRAFT: 'WAITING',
-                                  WAITING: 'READY',
-                                  READY: 'DONE',
-                                };
-                                updateReceiptStatus(item.id, nextMap[colStatus]);
-                              }}
-                              className="text-primary-container hover:underline uppercase font-bold"
-                              title="Advance state"
-                            >
-                              ADVANCE →
-                            </button>
-                          )}
-                        </div>
+
+                      <div className="flex items-center justify-between pt-2 mt-1 border-t border-[#E8E5F2] dark:border-[#282342] text-xs">
+                        <span className="text-slate-400 dark:text-slate-500 text-[11px] truncate">
+                          {item.scheduledUtc.split('//')[0]}
+                        </span>
+                        {colStatus !== 'DONE' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const nextMap: Record<string, OperationalStatus> = {
+                                DRAFT: 'WAITING',
+                                WAITING: 'READY',
+                                READY: 'DONE',
+                              };
+                              updateReceiptStatus(item.id, nextMap[colStatus]);
+                              showToast(`Advanced ${item.id} status`);
+                            }}
+                            className="inline-flex items-center gap-1 text-[#6C4CE6] dark:text-[#A78BFA] font-semibold hover:text-[#5839D6] transition-colors cursor-pointer"
+                            title="Advance to next state"
+                          >
+                            <span>Advance</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
 
                   {colItems.length === 0 && (
-                    <div className="flex-1 flex items-center justify-center text-tertiary font-label-sm uppercase">
-                      Empty Slot
+                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 text-xs py-8">
+                      <span>No receipts</span>
                     </div>
                   )}
                 </div>
@@ -359,46 +428,6 @@ export const ReceiptsView: React.FC = () => {
           })}
         </div>
       )}
-
-      {/* Ledger Pagination & Physical Audit Footer */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-4 border-t border-rule font-label-sm text-label-sm text-tertiary">
-        <div className="flex items-center gap-3">
-          <span>
-            SHOWING {filteredReceipts.length} OF {receipts.length} INBOUND ENTRIES
-          </span>
-          <span className="h-3 w-px bg-outline-variant" />
-          <span>DEPOT CAPACITY ALLOCATED: 68.4%</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-1 font-label-md text-label-md">
-            <span className="text-on-surface font-semibold">1</span>
-            <span className="text-outline">/</span>
-            <span className="text-tertiary">2</span>
-            <span className="text-outline">/</span>
-            <span className="text-tertiary">3</span>
-            <button
-              onClick={() => showToast('ALL INBOUND RECEIPTS LOADED ON CURRENT SHEET')}
-              className="ml-2 text-primary-container hover:underline uppercase tracking-wider font-label-sm text-label-sm cursor-pointer"
-            >
-              NEXT SHEET →
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Ledger Sync & Seal Section */}
-      <div className="mt-12 p-4 bg-surface-low border border-rule flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-        <div className="flex items-center gap-3">
-          <span className="w-2 h-2 bg-primary-container" />
-          <div className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-            LEDGER HASH: <span className="text-on-surface font-mono">0x94F2...88CA</span> · SYNCED
-            WITH TERMINAL MAIN 0.04s AGO
-          </div>
-        </div>
-        <div className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest">
-          ARCHIVE REVISION LEVEL: R-402 // VERIFIED PHYSICAL LEDGER
-        </div>
-      </div>
 
       {/* New Receipt Modal */}
       {showNewReceiptModal && (

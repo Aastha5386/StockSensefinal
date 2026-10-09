@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import {
+  ArrowLeft,
+  Printer,
+  CheckCircle2,
+  Building2,
+  Calendar,
+  MapPin,
+  ShieldCheck,
+  FileText,
+  Lock,
+  Package,
+} from 'lucide-react';
 
 export const ReceiptDetailView: React.FC = () => {
   const { receipts, selectedReceiptId, validateReceipt, showToast } = useApp();
@@ -32,6 +44,7 @@ export const ReceiptDetailView: React.FC = () => {
     setIsValidating(true);
     try {
       await validateReceipt(receipt.id);
+      showToast(`Receipt ${receipt.id} validated and stock reconciled successfully`);
     } catch (err: any) {
       showToast(err.message);
     } finally {
@@ -40,222 +53,242 @@ export const ReceiptDetailView: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-6">
-      {/* Back button & Top Ledger Brow Navigation */}
-      <div className="flex flex-col gap-2 border-b border-rule pb-3">
-        <div className="flex items-center justify-between text-on-surface-variant flex-wrap gap-2">
-          <button
-            onClick={() => navigate('/receipts')}
-            className="flex items-center gap-1.5 font-label-md text-label-md text-tertiary hover:text-on-surface uppercase tracking-wider transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-            <span>Return to Inbound Ledger</span>
-          </button>
-          <div className="flex items-center gap-3 text-secondary font-label-sm text-label-sm tracking-widest uppercase">
-            <span>// INBOUND SHIPMENT PROTOCOL · DOCK RECEIPT LEDGER</span>
-            <span className="hidden sm:inline">|</span>
-            <span className="hidden sm:inline">RECORD ENTRY // SEC-09-INBOUND</span>
-          </div>
-        </div>
+    <div className="w-full max-w-6xl mx-auto py-6 px-4 sm:px-6 space-y-6">
+      {/* Top Breadcrumb Navigation */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => navigate('/receipts')}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#6C4CE6] dark:text-[#A78BFA] hover:text-[#5839D6] transition-colors cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Inbound Receipts</span>
+        </button>
+
+        <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+          Receipt Ref: <span className="font-mono text-slate-600 dark:text-slate-300">{receipt.id}</span>
+        </span>
       </div>
 
-      {/* Header Section: Category, Identifier, Action Buttons */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          {/* Title & Identifier */}
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <span className="font-label-md text-label-md text-tertiary tracking-widest uppercase">
-                RECEIPT
-              </span>
-              <span className="font-label-sm text-label-sm text-secondary font-mono">
-                [{receipt.id}]
-              </span>
-            </div>
-            <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight font-normal">
-              {receipt.reference || 'WH/IN/0001'}
-            </h1>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="px-4 py-2 bg-transparent border border-rule text-on-surface hover:bg-surface-container font-label-md text-label-md uppercase tracking-wider rounded-[2px] transition-colors flex items-center gap-2 cursor-pointer select-none"
-            >
-              <span className="material-symbols-outlined text-[16px] text-tertiary">print</span>
-              <span>PRINT</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={isDone || isValidating}
-              onClick={handleValidate}
-              className={`px-5 py-2 font-label-md text-label-md uppercase tracking-wider rounded-[2px] transition-colors flex items-center gap-2 cursor-pointer select-none shadow-none font-semibold ${
-                isDone
-                  ? 'bg-tertiary-container text-white cursor-default'
-                  : isValidating
-                  ? 'bg-surface-container text-secondary cursor-not-allowed'
-                  : 'bg-primary-container hover:bg-[#8E4217] text-white'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">
-                {isDone ? 'verified' : 'check_circle'}
-              </span>
-              <span>{isValidating ? 'VALIDATING...' : isDone ? 'VALIDATED' : 'VALIDATE'}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* State Tracker */}
-        <div className="flex items-center gap-4 pt-1 border-b border-rule pb-3 font-label-md text-label-md uppercase tracking-wider">
-          <span className={receipt.status === 'DRAFT' ? 'text-on-surface font-semibold border-b-2 border-primary-container pb-1' : 'text-tertiary'}>
-            Draft
-          </span>
-          <span className="text-rule select-none">—</span>
-          <span className={receipt.status === 'READY' || receipt.status === 'WAITING' ? 'text-on-surface font-semibold border-b-2 border-primary-container pb-1' : 'text-tertiary'}>
-            Ready
-          </span>
-          <span className="text-rule select-none">—</span>
-          <span className={receipt.status === 'DONE' ? 'text-on-surface font-semibold border-b-2 border-primary-container pb-1 text-[#3F6B4A]' : 'text-secondary-fixed-dim'}>
-            Done
-          </span>
-        </div>
-      </div>
-
-      {/* Two-field Manifest Meta Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl pb-5 border-b border-rule">
-        <div className="flex flex-col gap-1">
-          <span className="font-label-md text-label-md text-tertiary uppercase tracking-widest">
-            RECEIVE FROM
-          </span>
-          <span className="font-body-lg text-body-lg text-on-surface font-medium">
-            {receipt.contact}
-          </span>
-          <span className="font-label-sm text-label-sm text-secondary tracking-wider mt-0.5 font-mono">
-            CARRIER ID: NFL-NO-991204
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <span className="font-label-md text-label-md text-tertiary uppercase tracking-widest">
-            SCHEDULED DATE
-          </span>
-          <span className="font-label-lg text-label-lg text-on-surface">
-            {receipt.scheduledUtc}
-          </span>
-          <span className="font-label-sm text-label-sm text-secondary tracking-wider mt-0.5">
-            BERTH: {receipt.toLocation} [PALLET CRANE ACCESS]
-          </span>
-        </div>
-      </div>
-
-      {/* Secondary Archival Snapshot Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-surface-low border border-rule">
-        <div className="flex flex-col gap-0.5">
-          <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider">
-            CLEARANCE STATUS
-          </span>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className="w-[3px] h-3 bg-primary-container inline-block" />
-            <span className="font-label-md text-label-md text-on-surface uppercase font-semibold">
-              {receipt.clearanceStatus || 'CUSTOMS CLEARED'}
+      {/* Header Card: Identifier & Actions */}
+      <div className="bg-white dark:bg-[#141124] p-6 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#F0EDFD] dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] border border-[#6C4CE6]/25 dark:border-[#383256]">
+              PO Manifest
+            </span>
+            <span className="text-xs font-mono text-slate-400 dark:text-slate-500">
+              {receipt.id}
             </span>
           </div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            {receipt.reference || 'WH/IN/0001'}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Scheduled Intake: {receipt.scheduledUtc}
+          </p>
         </div>
 
-        <div className="flex flex-col gap-0.5">
-          <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider">
-            CONTAINER SEAL
-          </span>
-          <span className="font-label-md text-label-md text-on-surface mt-1 font-mono">
-            {receipt.containerSeal || '#SEAL-9844-EU'}
-          </span>
-        </div>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1B172E] text-slate-700 dark:text-slate-200 hover:bg-[#FAF9FD] dark:hover:bg-[#252040] text-sm font-medium rounded-xl border border-[#E8E5F2] dark:border-[#282342] transition-colors cursor-pointer"
+          >
+            <Printer className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+            <span>Print Manifest</span>
+          </button>
 
-        <div className="flex flex-col gap-0.5">
-          <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider">
-            INSPECTION LEVEL
-          </span>
-          <span className="font-label-md text-label-md text-on-surface mt-1 font-mono">
-            {receipt.inspectionLevel || 'TIER-2 PHYSICAL TALLY'}
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-0.5">
-          <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider">
-            TOTAL PIECES / UNITS
-          </span>
-          <span className="font-label-md text-label-md text-on-surface mt-1 text-left tabular-nums font-semibold">
-            {receipt.totalPieces || '2,030 ASSORTED'}
-          </span>
+          <button
+            type="button"
+            disabled={isDone || isValidating}
+            onClick={handleValidate}
+            className={`inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-xl transition-all shadow-sm cursor-pointer ${
+              isDone
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 cursor-default'
+                : isValidating
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                : 'bg-[#6C4CE6] hover:bg-[#5839D6] text-white shadow-[#6C4CE6]/25'
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>
+              {isValidating ? 'Validating...' : isDone ? 'Intake Validated' : 'Validate & Receive'}
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* Line-items Table Section */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-primary-container inline-block" />
-            <h2 className="font-label-md text-label-md text-on-surface tracking-widest uppercase font-semibold">
-              MANIFEST LINE ITEMS ({receipt.items.length.toString().padStart(2, '0')})
-            </h2>
+      {/* Modern Stepper / Progress Bar */}
+      <div className="bg-white dark:bg-[#141124] p-4 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs">
+        <div className="flex items-center justify-between max-w-xl mx-auto text-xs font-semibold">
+          <div className="flex items-center gap-2 text-slate-900 dark:text-white">
+            <span className="w-6 h-6 rounded-full bg-[#6C4CE6] text-white flex items-center justify-center text-xs">
+              1
+            </span>
+            <span>Draft Created</span>
           </div>
-          <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest">
-            TALLY WEIGHT: {receipt.tallyWeight || '4,820 KG NET'}
+          <div className="h-0.5 flex-1 mx-3 bg-[#E8E5F2] dark:bg-[#282342]" />
+          <div
+            className={`flex items-center gap-2 ${
+              receipt.status !== 'DRAFT' ? 'text-[#6C4CE6] dark:text-[#A78BFA]' : 'text-slate-400 dark:text-slate-500'
+            }`}
+          >
+            <span
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                receipt.status !== 'DRAFT'
+                  ? 'bg-[#6C4CE6] text-white'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+              }`}
+            >
+              2
+            </span>
+            <span>Dock Processing</span>
+          </div>
+          <div className="h-0.5 flex-1 mx-3 bg-[#E8E5F2] dark:bg-[#282342]" />
+          <div
+            className={`flex items-center gap-2 ${
+              isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'
+            }`}
+          >
+            <span
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                isDone ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+              }`}
+            >
+              3
+            </span>
+            <span>Received & Reconciled</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Snapshot Specs Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-[#141124] p-4 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+            <ShieldCheck className="w-4 h-4 text-[#6C4CE6] dark:text-[#A78BFA]" />
+            <span>Clearance Status</span>
+          </div>
+          <div className="text-sm font-semibold text-slate-900 dark:text-white">
+            {receipt.clearanceStatus || 'Customs Cleared'}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#141124] p-4 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+            <Lock className="w-4 h-4 text-[#6C4CE6] dark:text-[#A78BFA]" />
+            <span>Container Seal</span>
+          </div>
+          <div className="text-sm font-mono font-semibold text-slate-900 dark:text-white">
+            {receipt.containerSeal || '#SEAL-9844-EU'}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#141124] p-4 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+            <FileText className="w-4 h-4 text-[#6C4CE6] dark:text-[#A78BFA]" />
+            <span>Inspection Level</span>
+          </div>
+          <div className="text-sm font-semibold text-slate-900 dark:text-white">
+            {receipt.inspectionLevel || 'Tier-2 Physical Tally'}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#141124] p-4 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+            <Package className="w-4 h-4 text-[#6C4CE6] dark:text-[#A78BFA]" />
+            <span>Total Pieces / Units</span>
+          </div>
+          <div className="text-sm font-bold text-slate-900 dark:text-white">
+            {receipt.totalPieces || '2,030 ASSORTED'}
+          </div>
+        </div>
+      </div>
+
+      {/* Logistics & Dock Information */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-[#141124] p-5 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-[#F0EDFD] dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] flex items-center justify-center shrink-0">
+            <Building2 className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              Supplier & Carrier
+            </div>
+            <div className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
+              {receipt.contact}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+              Carrier ID: {receipt.carrierCode || 'NFL-NO-991204'}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#141124] p-5 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] flex items-center justify-center shrink-0">
+            <MapPin className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              Warehouse Staging Bay
+            </div>
+            <div className="text-base font-semibold text-slate-900 dark:text-white mt-0.5">
+              {receipt.toLocation}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Scheduled Arrival: {receipt.scheduledUtc}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Manifest Line Items Table */}
+      <div className="bg-white dark:bg-[#141124] rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs overflow-hidden">
+        <div className="p-5 border-b border-[#E8E5F2] dark:border-[#282342] flex items-center justify-between">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white">
+            Manifest Line Items ({receipt.items.length})
+          </h2>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            Tally Weight: {receipt.tallyWeight || '4,820 KG Net'}
           </span>
         </div>
 
-        <div className="w-full overflow-x-auto border-t border-b border-on-surface">
-          <table className="w-full border-collapse text-left min-w-[640px]">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>
-              <tr className="border-b border-on-surface bg-surface-low select-none">
-                <th className="py-2.5 pl-3 pr-4 font-label-md text-label-md text-tertiary uppercase tracking-wider">
-                  PRODUCT
-                </th>
-                <th className="py-2.5 px-4 font-label-md text-label-md text-tertiary uppercase tracking-wider">
-                  SKU
-                </th>
-                <th className="py-2.5 px-4 font-label-md text-label-md text-tertiary uppercase tracking-wider">
-                  UNIT
-                </th>
-                <th className="py-2.5 pl-4 pr-3 font-label-md text-label-md text-tertiary uppercase tracking-wider text-right">
-                  QUANTITY
-                </th>
+              <tr className="bg-[#FAF9FD] dark:bg-[#1B172E] border-b border-[#E8E5F2] dark:border-[#282342] text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <th className="py-3 px-5">Product Description</th>
+                <th className="py-3 px-5">SKU</th>
+                <th className="py-3 px-5">Unit</th>
+                <th className="py-3 px-5 text-right">Quantity</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-rule font-body-md text-body-md text-on-surface">
+            <tbody className="divide-y divide-[#E8E5F2] dark:divide-[#282342] text-sm text-slate-700 dark:text-slate-300">
               {receipt.items.length > 0 ? (
                 receipt.items.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-surface-container transition-colors group">
-                    <td className="py-3 pl-3 pr-4">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-on-surface group-hover:text-primary-container transition-colors">
-                          {item.product}
-                        </span>
-                        {item.spec && (
-                          <span className="font-label-sm text-label-sm text-tertiary">
-                            {item.spec}
-                          </span>
-                        )}
-                      </div>
+                  <tr key={idx} className="hover:bg-[#FAF9FD] dark:hover:bg-[#1B172E]/60 transition-colors">
+                    <td className="py-3.5 px-5">
+                      <div className="font-semibold text-slate-900 dark:text-white">{item.product}</div>
+                      {item.spec && (
+                        <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.spec}</div>
+                      )}
                     </td>
-                    <td className="py-3 px-4 font-label-md text-label-md text-secondary font-mono">
+                    <td className="py-3.5 px-5 font-mono text-xs text-slate-600 dark:text-slate-400">
                       {item.sku}
                     </td>
-                    <td className="py-3 px-4 font-label-md text-label-md text-tertiary">
+                    <td className="py-3.5 px-5 text-slate-600 dark:text-slate-400 text-xs">
                       {item.unit}
                     </td>
-                    <td className="py-3 pl-4 pr-3 font-label-lg text-label-lg font-semibold text-on-surface text-right tabular-nums">
+                    <td className="py-3.5 px-5 text-right font-bold text-slate-900 dark:text-white tabular-nums">
                       {item.quantity.toLocaleString()}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-secondary font-label-md">
-                    // NO CARGO LINE ITEMS REGISTERED UNDER THIS RECEIPT //
+                  <td colSpan={4} className="py-8 text-center text-slate-400 dark:text-slate-500 text-sm">
+                    No individual cargo items attached to this PO manifest
                   </td>
                 </tr>
               )}
@@ -264,51 +297,36 @@ export const ReceiptDetailView: React.FC = () => {
         </div>
       </div>
 
-      {/* Visual Ledger Verification & Cargo Note Box */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 pt-2">
-        <div className="lg:col-span-2 flex flex-col gap-2 border border-rule p-4 bg-surface-lowest">
-          <div className="flex items-center justify-between border-b border-rule pb-2">
-            <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider font-semibold">
-              // RECEIVER TALLY NOTES
-            </span>
-            <span className="font-label-sm text-label-sm text-on-surface-variant font-mono">
-              LOG-ENTRY-402
-            </span>
-          </div>
-          <p className="font-body-sm text-body-sm text-on-surface leading-relaxed pt-1">
+      {/* Receiver Notes & Custodial Handover */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 bg-white dark:bg-[#141124] p-5 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs">
+          <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+            Receiver Inspection & Tally Notes
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             {receipt.receiverNotes ||
               'External sea container seals verified intact by Gatekeeper 04. No moisture breach observed on lower crate battens. Hydraulic drums marked for immediate segregation under Class-II storage regulation upon custody acceptance.'}
           </p>
         </div>
 
-        <div className="flex flex-col justify-between border border-rule p-4 bg-surface-low">
-          <div className="flex flex-col gap-1">
-            <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider">
-              CUSTODIAL HANDOVER
-            </span>
-            <span className="font-label-md text-label-md text-on-surface font-semibold">
-              DISPATCH CHIEF: A. LINDBERG
-            </span>
-            <span className="font-label-sm text-label-sm text-secondary font-mono">
-              TERMINAL AUTH: PASSED
-            </span>
+        <div className="bg-white dark:bg-[#141124] p-5 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+              Custodial Handover
+            </h3>
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+              Dispatch Chief: A. Lindberg
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+              Terminal Verification: Passed
+            </div>
           </div>
-          <div className="mt-4 pt-2 border-t border-rule flex items-center justify-between">
-            <span className="font-label-sm text-label-sm text-tertiary uppercase">SEAL STATUS</span>
-            <span className="font-label-sm text-label-sm text-[#3F6B4A] dark:text-[#68a377] font-semibold uppercase">
+          <div className="pt-3 mt-3 border-t border-[#E8E5F2] dark:border-[#282342] flex items-center justify-between text-xs">
+            <span className="text-slate-500 dark:text-slate-400">Seal Status:</span>
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
               {receipt.custodialHandover?.sealStatus || 'UNBROKEN'}
             </span>
           </div>
-        </div>
-      </div>
-
-      {/* Archival Ledger Footer Stamp */}
-      <div className="pt-6 pb-6 border-t border-rule flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-tertiary">
-        <div className="font-label-md text-label-md tracking-wider uppercase">
-          LEDGER HASH: 0x94F2...88CA · VERIFIED DEPOT CUSTODY · OPERATOR #774-K
-        </div>
-        <div className="font-label-sm text-label-sm tracking-widest uppercase text-on-surface-variant">
-          ARCHIVE REF: BERGEN-DOCK-SYS-2023 // 10:30:19 UTC
         </div>
       </div>
     </div>

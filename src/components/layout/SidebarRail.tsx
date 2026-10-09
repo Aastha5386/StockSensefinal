@@ -1,7 +1,28 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ASSET_IMAGES } from '../../data/initialData';
+import {
+  LayoutDashboard,
+  Boxes,
+  FileText,
+  Send,
+  Building2,
+  History,
+  TrendingUp,
+  BrainCircuit,
+  Bell,
+  QrCode,
+  Bot,
+  Settings,
+  ShieldCheck,
+  UserCheck,
+  LogOut,
+  X,
+  Layers,
+  ChevronRight,
+} from 'lucide-react';
+
+import { getDefaultRouteForRole, getNavItemsForRole } from '../../lib/roleRoutes';
 
 interface SidebarRailProps {
   mobileOpen?: boolean;
@@ -9,26 +30,11 @@ interface SidebarRailProps {
 }
 
 export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileOpen }) => {
-  const { userRole } = useApp();
+  const { userRole, userProfile, alerts, logout } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const navItems = [
-    { path: '/dashboard', title: 'Dashboard', icon: 'dashboard' },
-    { path: '/products', title: 'Product Catalog', icon: 'inventory_2' },
-    { path: '/receipts', title: 'Receipts Management', icon: 'receipt_long' },
-    { path: '/transfers', title: 'Transfers & Outbound', icon: 'sync_alt' },
-    { path: '/move-history', title: 'Stock Move History', icon: 'history' },
-  ];
-
-  const bottomItems = [];
-  if (userRole !== 'warehouse_staff') {
-    bottomItems.push({ path: '/settings', title: 'System Settings', icon: 'tune' });
-  }
-  if (userRole === 'admin') {
-    bottomItems.push({ path: '/settings-users', title: 'User Management', icon: 'manage_accounts' });
-  }
-  bottomItems.push({ path: '/profile-station', title: 'Profile Station', icon: 'account_circle' });
+  const { mainItems, adminItems, bottomItems } = getNavItemsForRole(userRole, alerts.length);
 
   const handleNav = (path: string) => {
     navigate(path);
@@ -38,7 +44,7 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileO
   const isActive = (path: string) => {
     const currentPath = location.pathname;
     if (currentPath === path) return true;
-    if (path === '/receipts' && (currentPath.startsWith('/receipts') || currentPath === '/receipt-detail' || currentPath === '/suppliers')) return true;
+    if (path === '/receipts' && (currentPath.startsWith('/receipts') || currentPath === '/receipt-detail')) return true;
     if (path === '/transfers' && (currentPath.startsWith('/deliveries') || currentPath === '/delivery-detail')) return true;
     if (path === '/move-history' && currentPath === '/reports') return true;
     if (path === '/settings' && currentPath === '/settings') return true;
@@ -47,170 +53,164 @@ export const SidebarRail: React.FC<SidebarRailProps> = ({ mobileOpen, setMobileO
     return false;
   };
 
+  const renderNavButton = (item: any) => {
+    const active = isActive(item.path);
+    const Icon = item.icon;
+
+    return (
+      <button
+        key={item.path}
+        onClick={() => handleNav(item.path)}
+        className={`flex items-center justify-between w-full h-10 px-3.5 rounded-xl transition-all duration-150 cursor-pointer ${
+          active
+            ? 'bg-[#F0EDFD] dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] font-semibold shadow-xs'
+            : 'text-slate-600 dark:text-slate-400 hover:text-[#6C4CE6] dark:hover:text-[#A78BFA] hover:bg-[#F7F5FF] dark:hover:bg-[#1E1A34]'
+        }`}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <Icon className={`w-4.5 h-4.5 shrink-0 ${active ? 'text-[#6C4CE6] dark:text-[#A78BFA]' : 'text-slate-400 dark:text-slate-500'}`} />
+          <span className="text-[13px] truncate">{item.title}</span>
+        </div>
+        {item.badge && (
+          <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold shrink-0">
+            {item.badge}
+          </span>
+        )}
+      </button>
+    );
+  };
+
   return (
     <>
-      {/* Desktop Fixed Expandable Sidebar Rail */}
-      <aside className="group fixed left-0 top-0 h-full w-14 hover:w-64 bg-[#23211d] dark:bg-[#161513] z-50 hidden md:flex flex-col justify-between items-start py-3 px-2 border-r border-[#3a3731] select-none shadow-xl transition-all duration-300 ease-in-out overflow-hidden">
-        <div className="flex flex-col items-start w-full gap-4">
-          {/* Brand Logo & Name */}
+      {/* Desktop Fixed Left Sidebar */}
+      <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-[#141124] border-r border-[#E8E5F2] dark:border-[#282342] z-40 hidden md:flex flex-col justify-between p-4 select-none shadow-[0_2px_12px_rgba(108,76,230,0.03)]">
+        {/* Brand Logo & Name */}
+        <div className="flex flex-col gap-6">
           <button
-            onClick={() => handleNav('/dashboard')}
-            className="flex items-center gap-3 w-full h-10 px-1 hover:opacity-90 transition-all cursor-pointer rounded-[2px]"
-            title="StockSense Freight Ledger"
+            onClick={() => handleNav(getDefaultRouteForRole(userRole))}
+            className="flex items-center gap-3 px-2 py-1.5 hover:opacity-95 transition-all cursor-pointer rounded-xl text-left"
           >
-            <div className="w-10 h-10 bg-primary-container shrink-0 flex items-center justify-center text-white font-headline-md font-bold tracking-wider border border-white/20 rounded-[2px] shadow-sm">
-              <img 
-                src={ASSET_IMAGES.brandLogo} 
-                alt="StockSense Logo" 
-                className="w-7 h-7 object-contain"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#6C4CE6] to-[#8C72FF] shrink-0 flex items-center justify-center text-white shadow-md shadow-[#6C4CE6]/25">
+              <Layers className="w-5 h-5 text-white" />
             </div>
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-75 font-headline-md text-white font-semibold tracking-wider whitespace-nowrap">
-              StockSense
-            </span>
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-slate-900 dark:text-white tracking-tight text-base leading-tight">
+                StockSense
+              </span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                {userRole === 'warehouse_staff' ? 'Terminal Station' : 'Inventory OS'}
+              </span>
+            </div>
           </button>
 
-          <div className="w-full h-[1px] bg-white/15" />
+          {/* Navigation Items */}
+          <nav className="flex flex-col gap-1 overflow-y-auto max-h-[calc(100vh-230px)] scrollbar-none pr-0.5" aria-label="Primary Navigation">
+            <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500 px-3.5 mb-1.5">
+              {userRole === 'warehouse_staff' ? 'Floor Operations' : 'Main Menu'}
+            </div>
+            {mainItems.map(renderNavButton)}
 
-          {/* Primary Navigation Items */}
-          <nav className="flex flex-col items-start w-full gap-1.5" aria-label="Primary Navigation">
-            {navItems.map((item) => {
-              const active = isActive(item.path);
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => handleNav(item.path)}
-                  className={`flex items-center gap-3.5 w-full h-10 px-2.5 transition-all duration-150 rounded-[2px] cursor-pointer whitespace-nowrap ${
-                    active
-                      ? 'bg-primary-container text-white border-l-2 border-[#ffb693] shadow-sm font-medium'
-                      : 'text-[#c2baa9] hover:text-white hover:bg-white/10'
-                  }`}
-                  title={item.title}
-                  aria-label={item.title}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <span className="material-symbols-outlined text-[20px] shrink-0">{item.icon}</span>
-                  <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-75 font-label-md text-label-md uppercase tracking-wider font-medium truncate">
-                    {item.title}
-                  </span>
-                </button>
-              );
-            })}
+            {adminItems.length > 0 && (
+              <>
+                <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500 px-3.5 mt-3 mb-1.5">
+                  Administration
+                </div>
+                {adminItems.map(renderNavButton)}
+              </>
+            )}
+
+            <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500 px-3.5 mt-3 mb-1.5">
+              Preferences
+            </div>
+            {bottomItems.map(renderNavButton)}
           </nav>
         </div>
 
-        {/* Secondary Lower Navigation */}
-        <div className="flex flex-col items-start w-full gap-2">
-          <div className="w-full h-[1px] bg-white/15" />
-          <nav className="flex flex-col items-start w-full gap-1.5" aria-label="System Settings">
-            {bottomItems.map((item) => {
-              const active = isActive(item.path);
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => handleNav(item.path)}
-                  className={`flex items-center gap-3.5 w-full h-10 px-2.5 transition-all duration-150 rounded-[2px] cursor-pointer whitespace-nowrap ${
-                    active
-                      ? 'bg-primary-container text-white border-l-2 border-[#ffb693] shadow-sm font-medium'
-                      : 'text-[#c2baa9] hover:text-white hover:bg-white/10'
-                  }`}
-                  title={item.title}
-                  aria-label={item.title}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <span className="material-symbols-outlined text-[20px] shrink-0">{item.icon}</span>
-                  <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-75 font-label-md text-label-md uppercase tracking-wider font-medium truncate">
-                    {item.title}
-                  </span>
-                </button>
-              );
-            })}
-          </nav>
+        {/* User Profile Card & Sign Out */}
+        <div className="pt-3 border-t border-[#E8E5F2] dark:border-[#282342] flex items-center justify-between gap-2 px-1">
+          <div
+            onClick={() => handleNav('/profile-station')}
+            className="flex items-center gap-2.5 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <img
+              alt="Operator Avatar"
+              className="w-8 h-8 rounded-full object-cover ring-2 ring-[#E8E5F2] dark:ring-[#282342] shrink-0"
+              src={userProfile?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256'}
+            />
+            <div className="flex flex-col text-left truncate min-w-0">
+              <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                {userProfile?.name || 'Alexander L.'}
+              </span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate capitalize">
+                {userRole?.replace('_', ' ') || 'Admin'}
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={async () => {
+              await logout();
+              navigate('/signin', { replace: true });
+            }}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+            title="Sign out of StockSense"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </aside>
 
-      {/* Mobile Drawer (When Opened) */}
+      {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
-            onClick={() => setMobileOpen && setMobileOpen(false)}
-          />
-          <div className="relative w-64 bg-[#23211d] text-white h-full p-4 flex flex-col justify-between border-r border-[#3a3731]">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-white/15">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-primary-container flex items-center justify-center text-white font-headline-md font-bold rounded-[2px]">
-                    <img 
-                      src={ASSET_IMAGES.brandLogo} 
-                      alt="StockSense Logo" 
-                      className="w-5 h-5 object-contain"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = 'none';
-                      }}
-                    />
+        <div className="fixed inset-0 z-50 md:hidden bg-slate-950/60 backdrop-blur-xs flex">
+          <div className="w-72 bg-white dark:bg-[#141124] h-full p-4 flex flex-col justify-between text-slate-900 dark:text-white border-r border-[#E8E5F2] dark:border-[#282342] shadow-2xl">
+            <div className="flex flex-col gap-4 overflow-y-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E8E5F2] dark:border-[#282342]">
+                <button
+                  onClick={() => handleNav(getDefaultRouteForRole(userRole))}
+                  className="flex items-center gap-2.5 cursor-pointer text-left"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-[#6C4CE6] flex items-center justify-center text-white shadow-sm">
+                    <Layers className="w-4.5 h-4.5" />
                   </div>
-                  <span className="font-headline-md text-white tracking-wider">StockSense</span>
-                </div>
+                  <span className="font-bold text-slate-900 dark:text-white text-base">StockSense</span>
+                </button>
                 <button
                   onClick={() => setMobileOpen && setMobileOpen(false)}
-                  className="text-[#c2baa9] hover:text-white p-1"
-                  aria-label="Close menu"
+                  className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
-                  <span className="material-symbols-outlined text-[22px]">close</span>
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="pt-4 flex flex-col gap-1">
-                <div className="font-label-sm text-label-sm text-[#8c8276] uppercase px-2 pb-1 tracking-widest">
-                  MAIN MENU
-                </div>
-                {navItems.map((item) => {
-                  const active = isActive(item.path);
-                  return (
-                    <button
-                      key={item.path}
-                      onClick={() => handleNav(item.path)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-left font-label-md text-label-md uppercase tracking-wider transition-colors rounded-[2px] ${
-                        active
-                          ? 'bg-primary-container text-white font-semibold'
-                          : 'text-[#c2baa9] hover:text-white hover:bg-white/10'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
-                      <span>{item.title}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <nav className="flex flex-col gap-1">
+                {mainItems.map(renderNavButton)}
+                {adminItems.map(renderNavButton)}
+                {bottomItems.map(renderNavButton)}
+              </nav>
             </div>
 
-            <div className="pt-4 border-t border-white/15 flex flex-col gap-1">
-              <div className="font-label-sm text-label-sm text-[#8c8276] uppercase px-2 pb-1 tracking-widest">
-                SYSTEM
+            <div className="pt-3 border-t border-[#E8E5F2] dark:border-[#282342] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <img
+                  alt="Operator Avatar"
+                  className="w-8 h-8 rounded-full object-cover"
+                  src={userProfile?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256'}
+                />
+                <span className="text-xs font-semibold">{userProfile?.name || 'Alexander L.'}</span>
               </div>
-              {bottomItems.map((item) => {
-                const active = isActive(item.path);
-                return (
-                  <button
-                    key={item.path}
-                    onClick={() => handleNav(item.path)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-left font-label-md text-label-md uppercase tracking-wider transition-colors rounded-[2px] ${
-                      active
-                        ? 'bg-primary-container text-white font-semibold'
-                        : 'text-[#c2baa9] hover:text-white hover:bg-white/10'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
-                    <span>{item.title}</span>
-                  </button>
-                );
-              })}
+              <button
+                onClick={async () => {
+                  await logout();
+                  navigate('/signin', { replace: true });
+                }}
+                className="p-1.5 text-slate-400 hover:text-rose-500 cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
+          <div className="flex-1" onClick={() => setMobileOpen && setMobileOpen(false)} />
         </div>
       )}
     </>

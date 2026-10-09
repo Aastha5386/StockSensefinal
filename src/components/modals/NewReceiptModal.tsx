@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Receipt, OperationalStatus } from '../../types';
+import { FilePlus2, X, Plus } from 'lucide-react';
 
 interface NewReceiptModalProps {
   onClose: () => void;
@@ -10,7 +11,9 @@ export const NewReceiptModal: React.FC<NewReceiptModalProps> = ({ onClose }) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addReceipt, products, showToast } = useApp();
 
-  const [refId, setRefId] = useState(`RCV-${new Date().getFullYear()}-${Math.floor(88420 + Math.random() * 900)}`);
+  const [refId, setRefId] = useState(
+    `RCV-${new Date().getFullYear()}-${Math.floor(88420 + Math.random() * 900)}`
+  );
   const [contact, setContact] = useState('');
   const [carrierCode, setCarrierCode] = useState('EXP-BERGEN');
   const [toLocation, setToLocation] = useState('BAY-02 / NORTH DOCK');
@@ -58,6 +61,7 @@ export const NewReceiptModal: React.FC<NewReceiptModalProps> = ({ onClose }) => 
       };
 
       await addReceipt(newReceipt);
+      showToast(`Inbound receipt ${newReceipt.id} logged successfully`);
       onClose();
     } catch (err: any) {
       showToast(err.message);
@@ -67,160 +71,148 @@ export const NewReceiptModal: React.FC<NewReceiptModalProps> = ({ onClose }) => 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs select-none">
-      <div className="w-full max-w-lg bg-surface border border-on-surface p-6 rounded-[2px] shadow-2xl flex flex-col gap-4 text-on-surface">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/60 backdrop-blur-xs select-none animate-in fade-in duration-150">
+      <div className="w-full max-w-lg bg-white dark:bg-[#141124] border border-[#E8E5F2] dark:border-[#282342] rounded-3xl p-6 sm:p-7 shadow-2xl shadow-[#6C4CE6]/10 dark:shadow-none space-y-5 animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-rule pb-3">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-3.5 bg-primary-container inline-block" />
-            <span className="font-label-md text-label-md tracking-wider uppercase font-semibold text-on-surface">
-              // LOG NEW INBOUND FREIGHT MANIFEST
-            </span>
+        <div className="flex items-center justify-between pb-3 border-b border-[#E8E5F2] dark:border-[#282342]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#F0EDFD] dark:bg-[#6C4CE6]/20 text-[#6C4CE6] dark:text-[#A78BFA] flex items-center justify-center">
+              <FilePlus2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Create Inbound Receipt</h2>
+              <p className="text-xs text-slate-500 dark:text-[#A5A1BE]">Log incoming purchase order and supplier delivery</p>
+            </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-secondary hover:text-on-surface p-1 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-[#FAF9FD] dark:hover:bg-[#1B172E] rounded-xl transition-colors cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="font-label-sm text-label-sm uppercase text-secondary font-semibold">
-                Receipt / Manifest Reference
-              </label>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Receipt Reference</label>
               <input
                 type="text"
                 required
                 value={refId}
                 onChange={(e) => setRefId(e.target.value)}
-                className="w-full h-8 px-2 bg-surface-lowest border border-rule font-label-md text-label-md uppercase text-on-surface focus:outline-none focus:border-primary-container"
+                className="w-full px-3 py-2 text-xs font-mono font-semibold bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] text-slate-900 dark:text-white uppercase"
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="font-label-sm text-label-sm uppercase text-secondary font-semibold">
-                Forwarder / Carrier Code
-              </label>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Carrier Code</label>
               <input
                 type="text"
+                required
                 value={carrierCode}
                 onChange={(e) => setCarrierCode(e.target.value)}
-                className="w-full h-8 px-2 bg-surface-lowest border border-rule font-label-md text-label-md uppercase text-on-surface focus:outline-none focus:border-primary-container"
+                className="w-full px-3 py-2 text-xs font-mono bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] text-slate-900 dark:text-white uppercase"
               />
             </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="font-label-sm text-label-sm uppercase text-secondary font-semibold">
-              Contact / Freight Line Name
-            </label>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Supplier / Forwarder</label>
             <input
               type="text"
               required
-              placeholder="e.g. Nordic Freight Logistics or Apex Industrial"
+              placeholder="e.g. Nordic Freight Logistics // OSLO-EXP"
               value={contact}
               onChange={(e) => setContact(e.target.value)}
-              className="w-full h-8 px-2 bg-surface-lowest border border-rule font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary-container"
+              className="w-full px-3 py-2 text-sm bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="font-label-sm text-label-sm uppercase text-secondary font-semibold">
-                Assigned Dock / Bay
-              </label>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Product SKU</label>
+              <select
+                value={selectedSku}
+                onChange={(e) => setSelectedSku(e.target.value)}
+                className="w-full px-2.5 py-2 text-xs bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] text-slate-900 dark:text-white font-medium cursor-pointer"
+              >
+                {products.map((p) => (
+                  <option key={p.sku} value={p.sku}>
+                    {p.sku} - {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Intake Quantity</label>
+              <input
+                type="number"
+                required
+                value={quantity}
+                onChange={(e) => setQuantity(Number(e.target.value) || 0)}
+                className="w-full px-3 py-2 text-xs font-semibold bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] text-slate-900 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Destination Bay</label>
               <input
                 type="text"
                 required
                 value={toLocation}
                 onChange={(e) => setToLocation(e.target.value)}
-                className="w-full h-8 px-2 bg-surface-lowest border border-rule font-label-md text-label-md uppercase text-on-surface focus:outline-none focus:border-primary-container"
+                className="w-full px-3 py-2 text-xs bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] text-slate-900 dark:text-white"
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="font-label-sm text-label-sm uppercase text-secondary font-semibold">
-                Operational Status
-              </label>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Initial Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as OperationalStatus)}
-                className="w-full h-8 px-2 bg-surface-lowest border border-rule font-label-md text-label-md uppercase text-on-surface focus:outline-none focus:border-primary-container"
+                className="w-full px-2.5 py-2 text-xs bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] text-slate-900 dark:text-white font-medium cursor-pointer"
               >
-                <option value="READY">READY</option>
-                <option value="WAITING">WAITING</option>
-                <option value="DRAFT">DRAFT</option>
-                <option value="DONE">DONE</option>
+                <option value="DRAFT">Draft</option>
+                <option value="WAITING">Waiting Inspection</option>
+                <option value="READY">Ready for Dock</option>
+                <option value="DONE">Completed</option>
               </select>
             </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="font-label-sm text-label-sm uppercase text-secondary font-semibold">
-              Scheduled Timestamp (UTC)
-            </label>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Scheduled Arrival</label>
             <input
               type="text"
+              required
               value={scheduledUtc}
               onChange={(e) => setScheduledUtc(e.target.value)}
-              className="w-full h-8 px-2 bg-surface-lowest border border-rule font-label-md text-label-md uppercase text-on-surface focus:outline-none focus:border-primary-container"
+              className="w-full px-3 py-2 text-xs bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] text-slate-900 dark:text-white"
             />
           </div>
 
-          {/* Initial SKU Line */}
-          <div className="p-3 bg-surface-low border border-rule flex flex-col gap-2 mt-1">
-            <span className="font-label-sm text-label-sm uppercase tracking-wider text-tertiary">
-              // INITIAL CARGO MANIFEST ITEM
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-[10px] font-label-sm uppercase text-secondary">
-                  Primary SKU
-                </label>
-                <select
-                  value={selectedSku}
-                  onChange={(e) => setSelectedSku(e.target.value)}
-                  className="w-full h-7 px-1.5 bg-surface-lowest border border-rule font-label-sm text-label-sm text-on-surface"
-                >
-                  {products.map((p) => (
-                    <option key={p.sku} value={p.sku}>
-                      {p.sku} - {p.name.slice(0, 24)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-label-sm uppercase text-secondary">
-                  Tally Quantity
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
-                  className="w-full h-7 px-2 bg-surface-lowest border border-rule font-label-sm text-label-sm text-right text-on-surface"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-rule mt-2">
+          {/* Action Buttons */}
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E8E5F2] dark:border-[#282342]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-1.5 border border-rule hover:bg-surface-container font-label-md text-label-md uppercase tracking-wider text-secondary transition-colors"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#1B172E] hover:bg-slate-50 dark:hover:bg-[#252040] border border-[#E8E5F2] dark:border-[#282342] rounded-xl transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`px-4 py-1.5 font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors ${
-                isSubmitting ? 'bg-surface-container text-secondary cursor-not-allowed' : 'bg-primary-container hover:bg-[#8E4217] text-white'
-              }`}
+              className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-semibold text-white bg-[#6C4CE6] hover:bg-[#5839D6] rounded-xl transition-all shadow-sm shadow-[#6C4CE6]/25 cursor-pointer disabled:opacity-50"
             >
-              {isSubmitting ? 'Inscribing...' : 'Sign & Inscribe Manifest'}
+              <Plus className="w-3.5 h-3.5" />
+              <span>{isSubmitting ? 'Logging...' : 'Log Receipt'}</span>
             </button>
           </div>
         </form>

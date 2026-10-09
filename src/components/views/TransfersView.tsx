@@ -1,6 +1,21 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { StockAdjustmentItem, MoveRecord } from '../../types';
+import {
+  ArrowLeftRight,
+  Plus,
+  CheckCircle2,
+  AlertTriangle,
+  RotateCcw,
+  ScanLine,
+  Flag,
+  ArrowRight,
+  Layers,
+  Truck,
+  ShieldCheck,
+  Clock,
+  Thermometer,
+} from 'lucide-react';
 
 export const TransfersView: React.FC = () => {
   const {
@@ -15,13 +30,13 @@ export const TransfersView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'combined' | 'transfer' | 'adjustment'>('combined');
 
   // Form states for Transfer
-  const [fromLoc, setFromLoc] = useState('WH-A/RACK-14');
-  const [toLoc, setToLoc] = useState('COLD-STOR/01');
-  const [mandate, setMandate] = useState('BATCH RELOCATION // CRIT-TEMP REGIME');
-  const [carrierVehicle, setCarrierVehicle] = useState('PALLET-JACK FORK #04');
-  const [tempEnvelope, setTempEnvelope] = useState('-2.0°C TO +3.5°C');
-  const [sealCert, setSealCert] = useState('VA-990-21-TAMPER');
-  const [estDuration, setEstDuration] = useState('18 MINUTES GROUND');
+  const [fromLoc, setFromLoc] = useState('WH-A / RACK-14 // MAIN WAREHOUSE');
+  const [toLoc, setToLoc] = useState('COLD-STOR / 01 // DEEP CHILL ZONE');
+  const [mandate, setMandate] = useState('Batch Relocation / Critical Temperature Regime');
+  const [carrierVehicle] = useState('Pallet Forklift #04');
+  const [tempEnvelope] = useState('-2.0°C to +3.5°C');
+  const [sealCert] = useState('VA-990-21-TAMPER');
+  const [estDuration] = useState('18 Minutes');
 
   // Adjustment notes
   const [marshalNotes, setMarshalNotes] = useState('');
@@ -45,15 +60,15 @@ export const TransfersView: React.FC = () => {
         timestampUtc: `${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()} // ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} UTC`,
         carrier: `Internal Transfer / ${carrierVehicle}`,
         carrierTag: 'INT-CONV',
-        from: fromLoc,
-        to: toLoc,
+        from: fromLoc.split('//')[0].trim(),
+        to: toLoc.split('//')[0].trim(),
         quantity: '64 PALLET',
         isPositive: true,
         status: 'DONE',
         kind: 'internal',
       };
       await addMoveRecord(newMove);
-      showToast(`TRANSFER MANDATE EXECUTED: ${fromLoc} -> ${toLoc}`);
+      showToast(`Transfer mandate executed: ${fromLoc.split('//')[0].trim()} → ${toLoc.split('//')[0].trim()}`);
     } catch (err: any) {
       showToast(err.message);
     } finally {
@@ -74,6 +89,7 @@ export const TransfersView: React.FC = () => {
         countedQuantity: 64,
       };
       await appendAdjustmentItem(newItem);
+      showToast('Appended new SKU line to adjustment tally');
     } catch (err: any) {
       showToast(err.message);
     } finally {
@@ -85,6 +101,7 @@ export const TransfersView: React.FC = () => {
     setIsSubmittingAdjustment(true);
     try {
       await postAdjustmentRecord(marshalNotes);
+      showToast('Stock adjustment and ledger variance reconciled successfully');
       setMarshalNotes('');
     } catch (err: any) {
       showToast(err.message);
@@ -94,52 +111,38 @@ export const TransfersView: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-[1440px] mx-auto pb-16 px-4 sm:px-6">
-      {/* Top Meta Brow & Operation Status Bar */}
-      <div className="flex flex-wrap items-center justify-between border-b border-rule pb-2 pt-1 gap-2">
-        <span className="font-label-sm text-label-sm text-tertiary tracking-widest uppercase">
-          // INTERNAL WAREHOUSE MOVEMENTS &amp; PHYSICAL INVENTORY RECONCILIATION
-        </span>
-        <div className="flex items-center gap-4 text-tertiary font-label-sm text-label-sm">
-          <span className="tracking-wider">STATION: LOG-TERMINAL-04</span>
-          <span className="text-outline-variant">|</span>
-          <span className="tracking-wider">AUDIT REGIME: ACTIVE</span>
-          <span className="text-outline-variant">|</span>
-          <span className="text-on-surface">SYS.TIME: 14:02:49 UTC</span>
-        </div>
-      </div>
-
-      {/* Primary Page Header & Plain-Text Navigation Ledger Tabs */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-on-surface pb-4 pt-5 gap-4">
+    <div className="w-full max-w-[1400px] mx-auto pb-16 pt-2 px-4 sm:px-6 space-y-6">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight font-normal">
-            Transfers &amp; Adjustments
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Transfers & Adjustments
           </h1>
-          <p className="font-body-sm text-body-sm text-tertiary mt-1">
-            Archival dual-ledger for inter-bay conveyance mandates and physical tally reconciliation.
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            Execute inter-bay warehouse transfers and reconcile physical inventory counts
           </p>
         </div>
 
-        {/* Minimalist Plain-Text Tabs (Underline indicator, zero pill-surfaces) */}
-        <div className="flex items-center gap-6 select-none" id="ledger-nav-tabs">
+        {/* Navigation Tabs */}
+        <div className="flex items-center gap-1 bg-white dark:bg-[#141124] p-1 rounded-xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs">
           <button
             type="button"
             onClick={() => setActiveTab('combined')}
-            className={`font-label-lg text-label-lg uppercase tracking-wider pb-1 transition-colors cursor-pointer ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               activeTab === 'combined'
-                ? 'text-on-surface font-semibold border-b-2 border-primary-container'
-                : 'text-tertiary hover:text-on-surface border-b-2 border-transparent'
+                ? 'bg-[#6C4CE6] text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-[#F7F5FF] dark:hover:bg-[#1E1A34]'
             }`}
           >
-            Dual Ledger View
+            Combined View
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('transfer')}
-            className={`font-label-lg text-label-lg uppercase tracking-wider pb-1 transition-colors cursor-pointer ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               activeTab === 'transfer'
-                ? 'text-on-surface font-semibold border-b-2 border-primary-container'
-                : 'text-tertiary hover:text-on-surface border-b-2 border-transparent'
+                ? 'bg-[#6C4CE6] text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-[#F7F5FF] dark:hover:bg-[#1E1A34]'
             }`}
           >
             Internal Transfer
@@ -147,10 +150,10 @@ export const TransfersView: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('adjustment')}
-            className={`font-label-lg text-label-lg uppercase tracking-wider pb-1 transition-colors cursor-pointer ${
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               activeTab === 'adjustment'
-                ? 'text-on-surface font-semibold border-b-2 border-primary-container'
-                : 'text-tertiary hover:text-on-surface border-b-2 border-transparent'
+                ? 'bg-[#6C4CE6] text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-[#F7F5FF] dark:hover:bg-[#1E1A34]'
             }`}
           >
             Stock Adjustment
@@ -158,443 +161,396 @@ export const TransfersView: React.FC = () => {
         </div>
       </div>
 
-      {/* Ledger Body Container */}
-      <div className="flex flex-col gap-8 mt-6">
-        {/* SECTION 01: INTERNAL TRANSFER MANIFEST */}
-        {(activeTab === 'combined' || activeTab === 'transfer') && (
-          <section className="flex flex-col border border-rule bg-surface-lowest p-5 sm:p-6 rounded-[2px]">
-            <div className="flex flex-wrap items-center justify-between pb-3 border-b border-rule gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-3.5 bg-primary-container" />
-                <span className="font-label-md text-label-md text-on-surface tracking-widest uppercase font-semibold">
-                  // SECTION 01 · ROUTE SPECIFICATION &amp; WAYBILL ISSUANCE
-                </span>
-              </div>
-              <span className="font-label-sm text-label-sm text-tertiary font-mono">
-                CONVEYANCE FORM ID: WTR-9042-ALPHA
-              </span>
+      {/* KPI Audit Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-[#141124] p-5 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-[#F0EDFD] dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] flex items-center justify-center shrink-0">
+            <Layers className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Audited Lines
             </div>
-
-            {/* Route Specification Ledger Form */}
-            <form onSubmit={handleExecuteTransfer} className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-5">
-              {/* From Location Field */}
-              <div className="lg:col-span-4 flex flex-col justify-end">
-                <label
-                  className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider mb-1"
-                  htmlFor="from-location"
-                >
-                  From Location [Source Terminal]
-                </label>
-                <div className="relative flex items-center border-b border-on-surface pb-1">
-                  <select
-                    id="from-location"
-                    value={fromLoc}
-                    onChange={(e) => setFromLoc(e.target.value)}
-                    className="w-full bg-transparent font-label-md text-label-md text-on-surface focus:outline-none appearance-none cursor-pointer pr-6 py-1 tracking-wider uppercase"
-                  >
-                    <option value="WH-A / RACK-14 // MAIN WAREHOUSE" className="bg-surface">
-                      WH-A / RACK-14 // MAIN WAREHOUSE
-                    </option>
-                    <option value="WH-A / BAY-02 // BULK STAGING" className="bg-surface">
-                      WH-A / BAY-02 // BULK STAGING
-                    </option>
-                    <option value="WH-B / SHELF-04 // PACKAGING DEPOT" className="bg-surface">
-                      WH-B / SHELF-04 // PACKAGING DEPOT
-                    </option>
-                    <option value="WH-C / SEC-09 // HAZMAT SHED" className="bg-surface">
-                      WH-C / SEC-09 // HAZMAT SHED
-                    </option>
-                  </select>
-                  <span className="material-symbols-outlined text-tertiary pointer-events-none absolute right-0 text-[18px]">
-                    arrow_drop_down
-                  </span>
-                </div>
-                <span className="font-label-sm text-label-sm text-tertiary/70 mt-1 uppercase">
-                  CURRENT STATUS: SECURED · 48 SKUS ACTIVE
-                </span>
-              </div>
-
-              {/* Conduit Transit Arrow */}
-              <div className="lg:col-span-1 hidden lg:flex items-center justify-center pt-4">
-                <span className="font-label-md text-tertiary tracking-widest select-none text-xl">
-                  →
-                </span>
-              </div>
-
-              {/* To Location Field */}
-              <div className="lg:col-span-4 flex flex-col justify-end">
-                <label
-                  className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider mb-1"
-                  htmlFor="to-location"
-                >
-                  To Location [Target Terminal]
-                </label>
-                <div className="relative flex items-center border-b border-on-surface pb-1">
-                  <select
-                    id="to-location"
-                    value={toLoc}
-                    onChange={(e) => setToLoc(e.target.value)}
-                    className="w-full bg-transparent font-label-md text-label-md text-on-surface focus:outline-none appearance-none cursor-pointer pr-6 py-1 tracking-wider uppercase"
-                  >
-                    <option value="COLD-STOR / 01 // DEEP CHILL ZONE" className="bg-surface">
-                      COLD-STOR / 01 // DEEP CHILL ZONE
-                    </option>
-                    <option value="WH-A / RACK-14 // MAIN WAREHOUSE" className="bg-surface">
-                      WH-A / RACK-14 // MAIN WAREHOUSE
-                    </option>
-                    <option value="DRUM-BAY / 01 // FLUID CONTAINMENT" className="bg-surface">
-                      DRUM-BAY / 01 // FLUID CONTAINMENT
-                    </option>
-                    <option value="DISPATCH-DOCK / 03 // OUTBOUND STAGE" className="bg-surface">
-                      DISPATCH-DOCK / 03 // OUTBOUND STAGE
-                    </option>
-                  </select>
-                  <span className="material-symbols-outlined text-tertiary pointer-events-none absolute right-0 text-[18px]">
-                    arrow_drop_down
-                  </span>
-                </div>
-                <span className="font-label-sm text-label-sm text-tertiary/70 mt-1 uppercase">
-                  CAPACITY INDEX: 78% SATURATION
-                </span>
-              </div>
-
-              {/* Priority / Auth Code */}
-              <div className="lg:col-span-3 flex flex-col justify-end">
-                <label
-                  className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider mb-1"
-                  htmlFor="transfer-mandate"
-                >
-                  Transfer Reason / Mandate
-                </label>
-                <div className="relative flex items-center border-b border-on-surface pb-1">
-                  <input
-                    id="transfer-mandate"
-                    type="text"
-                    value={mandate}
-                    onChange={(e) => setMandate(e.target.value)}
-                    className="w-full bg-transparent font-label-md text-label-md text-on-surface focus:outline-none py-1 tracking-wide uppercase"
-                  />
-                  <span className="font-label-sm text-tertiary select-none pl-1">REF#</span>
-                </div>
-                <span className="font-label-sm text-label-sm text-tertiary/70 mt-1 uppercase font-mono">
-                  AUTH: SUPV-D.ROVIRA // AUTH-892
-                </span>
-              </div>
-
-              {/* Additional Route Detail Grid Strip */}
-              <div className="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4 py-3 bg-surface-low px-4 mt-2 border border-rule">
-                <div className="flex flex-col">
-                  <span className="font-label-sm text-label-sm text-tertiary uppercase">
-                    CARRIER VEHICLE
-                  </span>
-                  <span className="font-label-md text-label-md text-on-surface font-semibold uppercase">
-                    {carrierVehicle}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-label-sm text-label-sm text-tertiary uppercase">
-                    TEMPERATURE ENVELOPE
-                  </span>
-                  <span className="font-label-md text-label-md text-on-surface font-semibold uppercase">
-                    {tempEnvelope}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-label-sm text-label-sm text-tertiary uppercase">
-                    SEAL CERTIFICATE
-                  </span>
-                  <span className="font-label-md text-label-md text-on-surface font-semibold uppercase">
-                    {sealCert}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-label-sm text-label-sm text-tertiary uppercase">
-                    EST. DURATION
-                  </span>
-                  <span className="font-label-md text-label-md text-on-surface font-semibold uppercase">
-                    {estDuration}
-                  </span>
-                </div>
-              </div>
-
-              {/* Execution Action Row */}
-              <div className="lg:col-span-12 flex flex-wrap items-center justify-between pt-2 gap-4">
-                <div className="flex items-center gap-2 text-tertiary font-label-sm text-label-sm">
-                  <span className="material-symbols-outlined text-[16px]">info</span>
-                  <span>TRANSFER LOGS WILL BE INKED TO PERMANENT MANIFEST BUFFER</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="reset"
-                    onClick={() => {
-                      setMandate('BATCH RELOCATION // CRIT-TEMP REGIME');
-                      showToast('ROUTE FORM RESET TO STABLE BASELINE');
-                    }}
-                    className="px-4 py-2 border border-rule bg-surface hover:bg-surface-container text-on-surface font-label-md text-label-md uppercase tracking-wider transition-colors cursor-pointer"
-                  >
-                    Reset Route
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmittingMove}
-                    className={`px-5 py-2 border font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
-                      isSubmittingMove ? 'border-rule text-secondary bg-surface-container cursor-not-allowed' : 'border-on-surface text-on-surface hover:bg-on-surface hover:text-surface'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      send_time_extension
-                    </span>
-                    <span>{isSubmittingMove ? 'Executing...' : 'Execute Transfer'}</span>
-                  </button>
-                </div>
-              </div>
-            </form>
-          </section>
-        )}
-
-        {/* Structural Hairline Partition */}
-        {activeTab === 'combined' && <div className="w-full border-b border-rule my-1" />}
-
-        {/* SECTION 02: STOCK ADJUSTMENT & RECONCILIATION */}
-        {(activeTab === 'combined' || activeTab === 'adjustment') && (
-          <section className="flex flex-col border border-rule bg-surface-lowest p-5 sm:p-6 rounded-[2px]">
-            <div className="flex flex-col md:flex-row md:items-center justify-between pb-3 border-b border-rule gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-3.5 bg-primary-container" />
-                  <span className="font-label-md text-label-md text-on-surface tracking-widest uppercase font-semibold">
-                    // SECTION 02 · PHYSICAL COUNT RECONCILIATION (CYCLE 2023-Q4)
-                  </span>
-                </div>
-                <span className="font-label-sm text-label-sm text-tertiary block mt-1">
-                  TARGET SECTORS: WH-A, WH-C, DRUM-BAY · COUNT RECORDED BY TALLY TEAM A-3
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleAppendRow}
-                  disabled={isSubmittingAdjustment}
-                  className={`px-3 py-1.5 border font-label-sm text-label-sm uppercase tracking-wider transition-colors flex items-center gap-1 ${
-                    isSubmittingAdjustment ? 'border-rule bg-surface text-tertiary opacity-50 cursor-not-allowed' : 'border-rule bg-surface hover:bg-surface-container text-tertiary hover:text-on-surface cursor-pointer'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[14px]">add</span>
-                  <span>Append SKU Line</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handlePostRecord}
-                  disabled={isSubmittingAdjustment}
-                  className={`px-4 py-2 text-white font-label-lg text-label-lg uppercase tracking-wider transition-colors rounded-[2px] flex items-center gap-2 font-semibold ${
-                    isSubmittingAdjustment ? 'bg-surface-container text-secondary cursor-not-allowed' : 'bg-primary-container hover:bg-[#8E4217] cursor-pointer'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[16px]">verified</span>
-                  <span>{isSubmittingAdjustment ? 'Posting...' : 'Post Adjustment Record'}</span>
-                </button>
-              </div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+              {adjustmentItems.length} SKUs
             </div>
+          </div>
+        </div>
 
-            {/* Summary Audit Tape Strip */}
-            <div className="grid grid-cols-2 md:grid-cols-4 border-b border-rule py-3 gap-4 font-label-sm text-label-sm text-tertiary bg-surface-low px-3 my-4">
-              <div>
-                <span className="uppercase block">AUDITED LINES:</span>
-                <span className="font-label-md text-label-md text-on-surface font-semibold">
-                  {adjustmentItems.length} ITEMS TOTAL
-                </span>
-              </div>
-              <div>
-                <span className="uppercase block">SYSTEM SUMMATION:</span>
-                <span className="font-label-md text-label-md text-on-surface font-semibold tabular-nums">
-                  {systemSummation.toLocaleString()} UNITS
-                </span>
-              </div>
-              <div>
-                <span className="uppercase block">COUNTED SUMMATION:</span>
-                <span className="font-label-md text-label-md text-on-surface font-semibold tabular-nums">
-                  {countedSummation.toLocaleString()} UNITS
-                </span>
-              </div>
-              <div>
-                <span className="uppercase block">NET VARIANCE:</span>
-                <span
-                  className={`font-label-md text-label-md font-bold tabular-nums ${
-                    netVariance === 0 ? 'text-[#3F6B4A]' : 'text-error'
-                  }`}
-                >
-                  {netVariance > 0 ? `+${netVariance}` : netVariance} UNITS ({netVariancePct}%)
-                </span>
-              </div>
+        <div className="bg-white dark:bg-[#141124] p-5 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              System Book Stock
             </div>
-
-            {/* Line-Items Physical Count Table */}
-            <div className="w-full overflow-x-auto border-t border-on-surface">
-              <table className="w-full text-left border-collapse min-w-[760px]">
-                <thead>
-                  <tr className="border-b border-on-surface select-none bg-surface-low">
-                    <th className="py-2 px-3 font-label-md text-label-md text-tertiary uppercase tracking-wider">
-                      Product / SKU
-                    </th>
-                    <th className="py-2 px-3 font-label-md text-label-md text-tertiary uppercase tracking-wider">
-                      Location
-                    </th>
-                    <th className="py-2 px-3 font-label-md text-label-md text-tertiary uppercase tracking-wider text-right">
-                      System Quantity
-                    </th>
-                    <th className="py-2 px-3 font-label-md text-label-md text-tertiary uppercase tracking-wider text-right">
-                      Counted Quantity
-                    </th>
-                    <th className="py-2 px-3 font-label-md text-label-md text-tertiary uppercase tracking-wider text-right">
-                      Discrepancy
-                    </th>
-                    <th className="py-2 px-3 font-label-md text-label-md text-tertiary uppercase tracking-wider text-center w-20">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-rule font-body-sm text-body-sm text-on-surface">
-                  {adjustmentItems.map((item) => {
-                    const diff = item.countedQuantity - item.systemQuantity;
-                    const isMismatch = diff !== 0;
-
-                    return (
-                      <tr
-                        key={item.id}
-                        className={`transition-colors group ${
-                          isMismatch ? 'bg-error-container/10' : 'hover:bg-surface-container'
-                        }`}
-                      >
-                        <td className="py-3 px-3">
-                          <div className="flex flex-col">
-                            <span className="font-body-md text-body-md font-medium text-on-surface">
-                              {item.name}
-                            </span>
-                            <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider">
-                              {item.sku} · {item.spec}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-3 font-label-md text-label-md text-on-surface uppercase">
-                          {item.location}
-                        </td>
-                        <td className="py-3 px-3 font-label-md text-label-md text-on-surface text-right tabular-nums">
-                          {item.systemQuantity.toLocaleString()}
-                        </td>
-                        <td className="py-3 px-3 text-right">
-                          <input
-                            type="number"
-                            aria-label={`Counted quantity for ${item.sku}`}
-                            value={item.countedQuantity}
-                            onChange={(e) =>
-                              updateCountedQuantity(item.id, Number(e.target.value) || 0)
-                            }
-                            className={`w-24 text-right bg-surface border px-2 py-0.5 font-label-md text-label-md focus:outline-none ${
-                              isMismatch
-                                ? 'border-error text-error font-bold'
-                                : 'border-rule text-on-surface focus:border-primary-container'
-                            }`}
-                          />
-                        </td>
-                        <td className="py-3 px-3 text-right">
-                          {diff === 0 ? (
-                            <div className="flex items-center justify-end gap-1.5 text-[#3F6B4A] dark:text-[#68a377]">
-                              <span className="w-1.5 h-1.5 bg-[#3F6B4A]" />
-                              <span className="font-label-md text-label-md font-medium tracking-wide">
-                                0 [MATCH]
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-end gap-1.5 text-error">
-                              <span className="w-1.5 h-1.5 bg-error" />
-                              <span className="font-label-md text-label-md font-bold tracking-wide">
-                                {diff > 0 ? `+${diff}` : diff} [MISMATCH]
-                              </span>
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-3 px-3 text-center">
-                          {isMismatch ? (
-                            <button
-                              type="button"
-                              onClick={() => showToast(`FLAG INVESTIGATION INITIATED // ${item.sku}`)}
-                              className="text-error hover:opacity-80 p-1"
-                              title="Flag variance investigation"
-                            >
-                              <span className="material-symbols-outlined text-[18px]">flag</span>
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => showToast(`BARCODE VERIFIED // ${item.sku}`)}
-                              className="text-tertiary hover:text-on-surface p-1"
-                              title="Re-scan barcode"
-                            >
-                              <span className="material-symbols-outlined text-[18px]">
-                                barcode_scanner
-                              </span>
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
+              {systemSummation.toLocaleString()}
             </div>
+          </div>
+        </div>
 
-            {/* Tally Ledger Adjustment Remarks & Reconciliation Signoff */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-5 mt-3 border-t border-rule">
-              <div className="md:col-span-8 flex flex-col justify-end">
-                <label
-                  className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider mb-1"
-                  htmlFor="adjustment-notes"
-                >
-                  Discrepancy Justification / Marshal Notes
-                </label>
-                <input
-                  id="adjustment-notes"
-                  type="text"
-                  value={marshalNotes}
-                  onChange={(e) => setMarshalNotes(e.target.value)}
-                  placeholder="E.G. SHRINKAGE RECORDED UNDER WATER DAMAGE INCIDENT INC-4029 // RACK-08 PACKAGING FAILURE"
-                  className="w-full bg-transparent border-b border-on-surface pb-1 font-label-md text-label-md text-on-surface focus:outline-none uppercase placeholder:text-tertiary/40"
-                />
-              </div>
-              <div className="md:col-span-4 flex items-end justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={handlePostRecord}
-                  disabled={isSubmittingAdjustment}
-                  className={`w-full md:w-auto px-5 py-2.5 font-label-md text-label-md uppercase tracking-wider font-semibold transition-colors select-none text-center ${
-                    isSubmittingAdjustment ? 'bg-surface-container text-secondary cursor-not-allowed' : 'bg-primary-container hover:bg-[#8E4217] text-white cursor-pointer'
-                  }`}
-                >
-                  {isSubmittingAdjustment ? 'Posting...' : 'Post Adjustment Record'}
-                </button>
-              </div>
+        <div className="bg-white dark:bg-[#141124] p-5 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+            <ScanLine className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Physical Counted
             </div>
-          </section>
-        )}
+            <div className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
+              {countedSummation.toLocaleString()}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#141124] p-5 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs flex items-center gap-4">
+          <div
+            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+              netVariance === 0
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400'
+                : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400'
+            }`}
+          >
+            {netVariance === 0 ? (
+              <CheckCircle2 className="w-6 h-6" />
+            ) : (
+              <AlertTriangle className="w-6 h-6" />
+            )}
+          </div>
+          <div>
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Net Variance
+            </div>
+            <div
+              className={`text-2xl font-bold tabular-nums ${
+                netVariance === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+              }`}
+            >
+              {netVariance > 0 ? `+${netVariance}` : netVariance}{' '}
+              <span className="text-xs font-normal">({netVariancePct}%)</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Verification Ledger Archival Footer */}
-      <footer className="mt-8 pt-4 border-t border-rule flex flex-col md:flex-row items-start md:items-center justify-between text-tertiary gap-2">
-        <div className="flex items-center gap-3">
-          <span className="font-label-sm text-label-sm uppercase tracking-wider">
-            PHYSICAL TALLY REGISTER // REV C-4 · STAMPED BY CHIEF MARSHAL #104
-          </span>
-          <span className="inline-block w-2 h-2 bg-[#3F6B4A]" />
+      {/* SECTION 01: INTERNAL TRANSFER MANIFEST */}
+      {(activeTab === 'combined' || activeTab === 'transfer') && (
+        <div className="bg-white dark:bg-[#141124] p-6 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs space-y-5">
+          <div className="flex items-center justify-between pb-4 border-b border-[#E8E5F2] dark:border-[#282342]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#F0EDFD] dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] flex items-center justify-center">
+                <ArrowLeftRight className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Internal Transfer Route Specification
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Dispatch stock between storage zones, racks, or staging bays
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-mono font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-[#1B172E] px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-[#282342]">
+              FORM: WTR-9042
+            </span>
+          </div>
+
+          <form onSubmit={handleExecuteTransfer} className="space-y-5">
+            <div className="grid grid-cols-1 lg:grid-cols-11 gap-4 items-center">
+              {/* From Location */}
+              <div className="lg:col-span-5 space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Source Location
+                </label>
+                <select
+                  value={fromLoc}
+                  onChange={(e) => setFromLoc(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-sm bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] text-slate-900 dark:text-white font-medium cursor-pointer"
+                >
+                  <option value="WH-A / RACK-14 // MAIN WAREHOUSE">
+                    WH-A / RACK-14 · Main Warehouse
+                  </option>
+                  <option value="WH-A / BAY-02 // BULK STAGING">
+                    WH-A / BAY-02 · Bulk Staging
+                  </option>
+                  <option value="WH-B / SHELF-04 // PACKAGING DEPOT">
+                    WH-B / SHELF-04 · Packaging Depot
+                  </option>
+                  <option value="WH-C / SEC-09 // HAZMAT SHED">
+                    WH-C / SEC-09 · Hazmat Shed
+                  </option>
+                </select>
+              </div>
+
+              {/* Arrow */}
+              <div className="lg:col-span-1 flex items-center justify-center pt-5">
+                <div className="w-8 h-8 rounded-full bg-[#F0EDFD] dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] flex items-center justify-center">
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+
+              {/* To Location */}
+              <div className="lg:col-span-5 space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Destination Location
+                </label>
+                <select
+                  value={toLoc}
+                  onChange={(e) => setToLoc(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-sm bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] text-slate-900 dark:text-white font-medium cursor-pointer"
+                >
+                  <option value="COLD-STOR / 01 // DEEP CHILL ZONE">
+                    COLD-STOR / 01 · Deep Chill Zone
+                  </option>
+                  <option value="WH-A / RACK-14 // MAIN WAREHOUSE">
+                    WH-A / RACK-14 · Main Warehouse
+                  </option>
+                  <option value="DRUM-BAY / 01 // FLUID CONTAINMENT">
+                    DRUM-BAY / 01 · Fluid Containment
+                  </option>
+                  <option value="DISPATCH-DOCK / 03 // OUTBOUND STAGE">
+                    DISPATCH-DOCK / 03 · Outbound Stage
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            {/* Mandate & Meta */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Transfer Mandate / Reason
+              </label>
+              <input
+                type="text"
+                value={mandate}
+                onChange={(e) => setMandate(e.target.value)}
+                placeholder="E.g., Routine stock redistribution..."
+                className="w-full px-3.5 py-2.5 text-sm bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] text-slate-900 dark:text-white"
+              />
+            </div>
+
+            {/* Route Details Chips */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3.5 bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342]">
+              <div className="flex items-center gap-2.5">
+                <Truck className="w-4 h-4 text-[#6C4CE6] dark:text-[#A78BFA]" />
+                <div>
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Vehicle</div>
+                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">{carrierVehicle}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <Thermometer className="w-4 h-4 text-[#6C4CE6] dark:text-[#A78BFA]" />
+                <div>
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Temperature</div>
+                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">{tempEnvelope}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-[#6C4CE6] dark:text-[#A78BFA]" />
+                <div>
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Seal Cert</div>
+                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 font-mono">{sealCert}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <Clock className="w-4 h-4 text-[#6C4CE6] dark:text-[#A78BFA]" />
+                <div>
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">Duration</div>
+                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">{estDuration}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Action */}
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="reset"
+                onClick={() => {
+                  setMandate('Batch Relocation / Critical Temperature Regime');
+                  showToast('Reset transfer parameters');
+                }}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-[#1B172E] hover:bg-slate-50 dark:hover:bg-[#252040] border border-[#E8E5F2] dark:border-[#282342] rounded-xl transition-colors cursor-pointer"
+              >
+                Reset
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmittingMove}
+                className="inline-flex items-center gap-2 px-5 py-2 bg-[#6C4CE6] hover:bg-[#5839D6] text-white text-xs font-semibold rounded-xl transition-all shadow-sm shadow-[#6C4CE6]/25 cursor-pointer disabled:opacity-50"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5" />
+                <span>{isSubmittingMove ? 'Executing...' : 'Execute Transfer'}</span>
+              </button>
+            </div>
+          </form>
         </div>
-        <div className="flex items-center gap-3 font-label-sm text-label-sm tracking-wider uppercase">
-          <span>CHECKSUM: 0x9F41B7</span>
-          <span>·</span>
-          <span>NON-REPUDIATION SECURED</span>
-          <span>·</span>
-          <span className="text-on-surface font-semibold">DEPOT-402 DISPATCH TERMINAL</span>
+      )}
+
+      {/* SECTION 02: STOCK ADJUSTMENT & RECONCILIATION */}
+      {(activeTab === 'combined' || activeTab === 'adjustment') && (
+        <div className="bg-white dark:bg-[#141124] p-6 rounded-2xl border border-[#E8E5F2] dark:border-[#282342] shadow-xs space-y-5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-[#E8E5F2] dark:border-[#282342] gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <ScanLine className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Physical Count Reconciliation
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Audit physical inventory against system book records and record variances
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleAppendRow}
+                disabled={isSubmittingAdjustment}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#1B172E] hover:bg-[#FAF9FD] dark:hover:bg-[#252040] border border-[#E8E5F2] dark:border-[#282342] rounded-xl transition-colors cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5 text-[#6C4CE6] dark:text-[#A78BFA]" />
+                <span>Append SKU Line</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePostRecord}
+                disabled={isSubmittingAdjustment}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#6C4CE6] hover:bg-[#5839D6] rounded-xl transition-all shadow-sm shadow-[#6C4CE6]/25 cursor-pointer disabled:opacity-50"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>{isSubmittingAdjustment ? 'Posting...' : 'Post Adjustment'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto rounded-xl border border-[#E8E5F2] dark:border-[#282342]">
+            <table className="w-full text-left border-collapse min-w-[700px]">
+              <thead>
+                <tr className="bg-[#FAF9FD] dark:bg-[#1B172E] border-b border-[#E8E5F2] dark:border-[#282342] text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <th className="py-3 px-4">Product / SKU</th>
+                  <th className="py-3 px-4">Location</th>
+                  <th className="py-3 px-4 text-right">System Book</th>
+                  <th className="py-3 px-4 text-right">Counted Qty</th>
+                  <th className="py-3 px-4 text-right">Variance</th>
+                  <th className="py-3 px-4 text-center w-24">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E8E5F2] dark:divide-[#282342] text-sm text-slate-700 dark:text-slate-300">
+                {adjustmentItems.map((item) => {
+                  const diff = item.countedQuantity - item.systemQuantity;
+                  const isMismatch = diff !== 0;
+
+                  return (
+                    <tr
+                      key={item.id}
+                      className={`transition-colors ${
+                        isMismatch ? 'bg-rose-50/40 dark:bg-rose-950/20' : 'hover:bg-[#FAF9FD] dark:hover:bg-[#1B172E]/60'
+                      }`}
+                    >
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-slate-900 dark:text-white">{item.name}</div>
+                        <div className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                          {item.sku} · {item.spec}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-xs font-medium text-slate-600 dark:text-slate-400">
+                        {item.location}
+                      </td>
+                      <td className="py-3 px-4 text-right font-medium text-slate-700 dark:text-slate-300 tabular-nums">
+                        {item.systemQuantity.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <input
+                          type="number"
+                          aria-label={`Counted quantity for ${item.sku}`}
+                          value={item.countedQuantity}
+                          onChange={(e) =>
+                            updateCountedQuantity(item.id, Number(e.target.value) || 0)
+                          }
+                          className={`w-24 text-right px-2.5 py-1 text-sm rounded-lg border font-semibold tabular-nums focus:outline-none focus:ring-2 ${
+                            isMismatch
+                              ? 'border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 focus:ring-rose-200'
+                              : 'border-[#E8E5F2] dark:border-[#282342] bg-white dark:bg-[#141124] text-slate-900 dark:text-white focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6]'
+                          }`}
+                        />
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        {diff === 0 ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            0 (Match)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                            {diff > 0 ? `+${diff}` : diff}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {isMismatch ? (
+                          <button
+                            type="button"
+                            onClick={() => showToast(`Flagged investigation on ${item.sku}`)}
+                            className="p-1 text-rose-600 dark:text-rose-400 hover:opacity-80 cursor-pointer"
+                            title="Flag variance investigation"
+                          >
+                            <Flag className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => showToast(`Re-scanned barcode for ${item.sku}`)}
+                            className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
+                            title="Scan confirmation"
+                          >
+                            <ScanLine className="w-4 h-4" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Justification note & Post */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+            <div className="w-full sm:max-w-md space-y-1">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                Variance Justification Notes
+              </label>
+              <input
+                type="text"
+                value={marshalNotes}
+                onChange={(e) => setMarshalNotes(e.target.value)}
+                placeholder="E.g., Packaging shrinkage recorded during physical recount..."
+                className="w-full px-3 py-2 text-xs bg-[#FAF9FD] dark:bg-[#1B172E] rounded-xl border border-[#E8E5F2] dark:border-[#282342] focus:bg-white dark:focus:bg-[#141124] focus:outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handlePostRecord}
+              disabled={isSubmittingAdjustment}
+              className="w-full sm:w-auto px-5 py-2.5 bg-[#6C4CE6] hover:bg-[#5839D6] text-white text-xs font-semibold rounded-xl transition-all shadow-sm shadow-[#6C4CE6]/25 cursor-pointer disabled:opacity-50"
+            >
+              {isSubmittingAdjustment ? 'Reconciling...' : 'Confirm & Post Reconciliation'}
+            </button>
+          </div>
         </div>
-      </footer>
+      )}
     </div>
   );
 };

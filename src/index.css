@@ -1,68 +1,93 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
-    --color-surface: #fdf9f1;
-    --color-surface-dim: #dddad2;
-    --color-surface-bright: #fdf9f1;
+    /* StockSense Modern Lavender & Purple SaaS Palette */
+    --color-surface: #f7f5ff;
+    --color-surface-dim: #f0edfd;
+    --color-surface-bright: #ffffff;
     --color-surface-lowest: #ffffff;
-    --color-surface-low: #f7f3eb;
-    --color-surface-container: #f1ede5;
-    --color-surface-high: #ece8e0;
-    --color-surface-highest: #e6e2da;
-    --color-on-surface: #1c1c17;
-    --color-on-surface-variant: #55433a;
-    --color-inverse-surface: #31302b;
-    --color-inverse-on-surface: #f4f0e8;
-    --color-outline: #887269;
-    --color-outline-variant: #dcc1b6;
-    --color-surface-variant: #e6e2da;
-    --color-surface-tint: #9a4614;
-    --color-primary: #893905;
-    --color-primary-container: #a8501e;
+    --color-surface-low: #ffffff;
+    --color-surface-container: #f7f5ff;
+    --color-surface-high: #f0edfd;
+    --color-surface-highest: #e8e5f2;
+    --color-on-surface: #1e1b2e;
+    --color-on-surface-variant: #6b7280;
+    --color-inverse-surface: #1e1b2e;
+    --color-inverse-on-surface: #f7f5ff;
+    --color-outline: #dcd7ee;
+    --color-outline-variant: #e8e5f2;
+    --color-surface-variant: #f0edfd;
+    --color-surface-tint: #6c4ce6;
+    
+    /* Primary Accent: Royal SaaS Purple */
+    --color-primary: #6c4ce6;
+    --color-primary-container: #4f35b5;
+    --color-primary-light: #f0edfd;
     --color-on-primary: #ffffff;
-    --color-secondary: #625d5a;
-    --color-secondary-container: #e9e1dc;
-    --color-on-secondary-container: #68635f;
-    --color-tertiary: #575041;
-    --color-tertiary-container: #706858;
-    --color-on-tertiary-container: #f4e8d4;
-    --color-error: #ba1a1a;
-    --color-error-container: #ffdad6;
-    --color-rule-line: #ddd6c4;
-    --color-zebra-line: #f1ede4;
+    
+    /* Secondary & Neutrals */
+    --color-secondary: #6b7280;
+    --color-secondary-container: #f0edfd;
+    --color-on-secondary-container: #1e1b2e;
+    --color-tertiary: #8b5cf6;
+    --color-tertiary-container: #ede9fe;
+    --color-on-tertiary-container: #6d28d9;
+    
+    /* Semantic Status Colors */
+    --color-error: #ef4444;
+    --color-error-container: #fee2e2;
+    --color-success: #10b981;
+    --color-success-container: #ecfdf5;
+    --color-warning: #f59e0b;
+    --color-warning-container: #fef3c7;
+    
+    --color-rule-line: #e8e5f2;
+    --color-zebra-line: #faf9ff;
   }
 
   .dark {
-    --color-surface: #171614;
-    --color-surface-dim: #11100e;
-    --color-surface-bright: #1e1d1a;
-    --color-surface-lowest: #1c1b18;
-    --color-surface-low: #22201c;
-    --color-surface-container: #282622;
-    --color-surface-high: #312f29;
-    --color-surface-highest: #3b3832;
-    --color-on-surface: #f2ede4;
-    --color-on-surface-variant: #cfc5b8;
-    --color-inverse-surface: #f2ede4;
-    --color-inverse-on-surface: #1c1c17;
-    --color-outline: #8c8276;
-    --color-outline-variant: #433e36;
-    --color-surface-variant: #3a3731;
-    --color-surface-tint: #ffb693;
-    --color-primary: #ffb693;
-    --color-primary-container: #a8501e;
+    /* Deep Midnight Violet Theme */
+    --color-surface: #0e0c1a;
+    --color-surface-dim: #090812;
+    --color-surface-bright: #1b172e;
+    --color-surface-lowest: #141124;
+    --color-surface-low: #18152b;
+    --color-surface-container: #1e1a34;
+    --color-surface-high: #252040;
+    --color-surface-highest: #2f2a50;
+    --color-on-surface: #f7f5ff;
+    --color-on-surface-variant: #a5a1be;
+    --color-inverse-surface: #f7f5ff;
+    --color-inverse-on-surface: #0e0c1a;
+    --color-outline: #383256;
+    --color-outline-variant: #282342;
+    --color-surface-variant: #18152b;
+    --color-surface-tint: #8c72ff;
+    
+    --color-primary: #8c72ff;
+    --color-primary-container: #6c4ce6;
+    --color-primary-light: #252040;
     --color-on-primary: #ffffff;
-    --color-secondary: #9c958d;
-    --color-secondary-container: #33302b;
-    --color-on-secondary-container: #d9d2c8;
-    --color-tertiary: #b0a797;
-    --color-tertiary-container: #474238;
-    --color-on-tertiary-container: #f7edd9;
-    --color-error: #ffb4ab;
-    --color-error-container: #93000a;
-    --color-rule-line: #38352f;
-    --color-zebra-line: #22201d;
+    
+    --color-secondary: #9ca3af;
+    --color-secondary-container: #282342;
+    --color-on-secondary-container: #e8e5f2;
+    --color-tertiary: #a78bfa;
+    --color-tertiary-container: #3b2d6a;
+    --color-on-tertiary-container: #ddd6fe;
+    
+    --color-error: #f87171;
+    --color-error-container: #7f1d1d;
+    --color-success: #34d399;
+    --color-success-container: #064e3b;
+    --color-warning: #fbbf24;
+    --color-warning-container: #78350f;
+    
+    --color-rule-line: #282342;
+    --color-zebra-line: #18152b;
   }
 
   html, body {
@@ -70,69 +95,74 @@
     padding: 0;
     background-color: var(--color-surface);
     color: var(--color-on-surface);
-    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Utility font helper classes */
   .font-headline-xl {
-    font-family: 'Fraunces', serif;
-    font-size: 32px;
-    line-height: 40px;
-    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 26px;
+    line-height: 34px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
   .font-headline-lg {
-    font-family: 'Fraunces', serif;
-    font-size: 24px;
-    line-height: 32px;
-    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
   }
   .font-headline-md {
-    font-family: 'Fraunces', serif;
-    font-size: 18px;
-    line-height: 26px;
-    font-weight: 500;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
   .font-body-lg {
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 15px;
     line-height: 22px;
     font-weight: 400;
   }
   .font-body-md {
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 13px;
-    line-height: 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    line-height: 20px;
     font-weight: 400;
   }
   .font-body-sm {
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
-    line-height: 16px;
+    line-height: 17px;
     font-weight: 400;
   }
   .font-label-lg {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     line-height: 18px;
-    letter-spacing: 0.06em;
-    font-weight: 500;
+    letter-spacing: 0.02em;
+    font-weight: 600;
   }
   .font-label-md {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
     line-height: 16px;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.02em;
     font-weight: 500;
   }
   .font-label-sm {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    line-height: 14px;
-    letter-spacing: 0.1em;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    line-height: 15px;
+    letter-spacing: 0.03em;
     font-weight: 500;
   }
 
-  /* Color helper utility classes mapped to CSS variables for smooth dark mode */
+  /* Color helper utility classes */
   .bg-surface { background-color: var(--color-surface); }
   .bg-surface-dim { background-color: var(--color-surface-dim); }
   .bg-surface-bright { background-color: var(--color-surface-bright); }
@@ -160,7 +190,7 @@
   .border-surface-variant { border-color: var(--color-surface-variant); }
   .border-outline-variant { border-color: var(--color-outline-variant); }
 
-  /* Custom scrollbar */
+  /* Soft custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -169,7 +199,7 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--color-outline-variant);
-    border-radius: 2px;
+    background: var(--color-outline);
+    border-radius: 9999px;
   }
 }

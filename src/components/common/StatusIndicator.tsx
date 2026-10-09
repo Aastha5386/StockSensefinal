@@ -10,49 +10,53 @@ interface StatusIndicatorProps {
 export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
   status,
   className = '',
-  showBar = true,
 }) => {
   const norm = (status || '').toUpperCase() as OperationalStatus;
 
-  let barColor = '#9C9382'; // Draft
-  let textColor = 'text-secondary';
+  let pillClasses = 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/60';
+  let dotColor = 'bg-slate-400 dark:bg-slate-500';
+  let label: string = norm || 'DRAFT';
 
   switch (norm) {
     case 'WAITING':
-      barColor = '#B98424';
-      textColor = 'text-[#B98424] dark:text-[#d4a03c]';
+      pillClasses = 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200/80 dark:border-amber-900/50';
+      dotColor = 'bg-amber-500';
+      label = 'Waiting';
       break;
     case 'READY':
-      barColor = '#A8501E';
-      textColor = 'text-primary-container dark:text-primary';
+      pillClasses = 'bg-[#F0EDFD] dark:bg-[#252040] text-[#6C4CE6] dark:text-[#A78BFA] border-[#6C4CE6]/30 dark:border-[#383256]';
+      dotColor = 'bg-[#6C4CE6] dark:bg-[#A78BFA]';
+      label = 'Ready';
       break;
     case 'DONE':
-      barColor = '#3F6B4A';
-      textColor = 'text-[#3F6B4A] dark:text-[#68a377]';
+      pillClasses = 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-900/50';
+      dotColor = 'bg-emerald-500';
+      label = 'Completed';
       break;
     case 'LATE':
+      pillClasses = 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200/80 dark:border-rose-900/50';
+      dotColor = 'bg-rose-500';
+      label = 'Overdue';
+      break;
     case 'CANCELLED':
-      barColor = '#7A2E22';
-      textColor = 'text-error';
+      pillClasses = 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200/80 dark:border-rose-900/50 line-through';
+      dotColor = 'bg-rose-400';
+      label = 'Cancelled';
       break;
     case 'DRAFT':
     default:
-      barColor = '#9C9382';
-      textColor = 'text-secondary';
+      pillClasses = 'bg-slate-100/70 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200/80 dark:border-slate-700/60';
+      dotColor = 'bg-slate-400 dark:bg-slate-500';
+      label = 'Draft';
       break;
   }
 
   return (
-    <div className={`inline-flex items-center gap-[6px] ${className}`}>
-      {showBar && (
-        <span
-          className="w-[3px] h-[12px] inline-block shrink-0"
-          style={{ backgroundColor: barColor }}
-        />
-      )}
-      <span className={`font-label-md text-label-md tracking-wider uppercase font-semibold ${textColor}`}>
-        {norm}
-      </span>
-    </div>
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${pillClasses} ${className}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
+      <span>{label}</span>
+    </span>
   );
 };

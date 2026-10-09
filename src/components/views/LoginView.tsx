@@ -1,364 +1,603 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ASSET_IMAGES } from '../../data/initialData';
-import { signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, sendPasswordResetEmail } from 'firebase/auth';
-import { auth, db } from '../../lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import {
+  Layers,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Sun,
+  Moon,
+  Loader2,
+  ArrowRight,
+  CheckCircle2,
+  AlertCircle,
+  Building2,
+  Check,
+  UserCheck,
+} from 'lucide-react';
 
-export const LoginView: React.FC = () => {
-  const { login, register, isDarkMode, toggleDarkMode, showToast } = useApp();
+import { getDefaultRouteForRole, isRouteAllowedForRole } from '../../lib/roleRoutes';
+import { UserRole } from '../../types';
+
+interface LoginViewProps {
+  initialMode?: 'signin' | 'signup';
+}
+
+export const LoginView: React.FC<LoginViewProps> = ({ initialMode }) => {
+  const { login, register, isDarkMode, toggleDarkMode } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as any)?.from?.pathname || '/dashboard';
-  const [email, setEmail] = useState('operator@stocksense.internal');
-  const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [keepActive, setKeepActive] = useState(true);
-  const [isRegisterMode, setIsRegisterMode] = useState(false);
-  const [phoneMode, setPhoneMode] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
 
-  const handleResetPassword = async () => {
-    if (!email) {
-      showToast('ENTER YOUR EMAIL ADDRESS FOR PASSWORD RESET');
-      return;
+  // Determine initial mode: prop takes priority, then URL path, default signin
+  const [isRegisterMode, setIsRegisterMode] = useState<boolean>(() => {
+    if (initialMode === 'signup') return true;
+    if (initialMode === 'signin') return false;
+    return location.pathname === '/signup';
+  });
+
+  // Company Form states
+  const [companyName, setCompanyName] = useState('');
+  const [companyEmailOrId, setCompanyEmailOrId] = useState('');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('admin');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // UI states
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [keepActive, setKeepActive] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Dynamic Password Security Rules Evaluation
+  const hasMinLength = password.length >= 8;
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+  const allPasswordRulesMet = hasMinLength && hasUpper && hasLower && hasNumber && hasSpecial;
+
+  const passwordRules = [
+    { label: 'At least 8 characters', met: hasMinLength },
+    { label: 'One uppercase letter (A-Z)', met: hasUpper },
+    { label: 'One lowercase letter (a-z)', met: hasLower },
+    { label: 'One number (0-9)', met: hasNumber },
+    { label: 'One special character (@, #, $, %, etc.)', met: hasSpecial },
+  ];
+
+  // Sync mode with route changes & read flash messages
+  useEffect(() => {
+    if (location.pathname === '/signup') {
+      setIsRegisterMode(true);
+      setErrorMessage(null);
+    } else if (location.pathname === '/signin' || location.pathname === '/login') {
+      setIsRegisterMode(false);
     }
-    try {
-      await sendPasswordResetEmail(auth, email);
-      showToast(`OTP / PASSWORD RESET DISPATCHED TO ${email.toUpperCase()}`);
-    } catch (err: any) {
-      showToast(`PASSWORD RESET FAILED: ${err.message}`);
+
+    const stateObj = location.state as any;
+    if (stateObj?.successMessage) {
+      setSuccessMessage(stateObj.successMessage);
+    }
+    if (stateObj?.registeredEmail) {
+      setCompanyEmailOrId(stateObj.registeredEmail);
+    }
+  }, [location.pathname, location.state]);
+
+  const switchMode = (toRegister: boolean) => {
+    setIsRegisterMode(toRegister);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setPassword('');
+    setConfirmPassword('');
+    if (toRegister) {
+      navigate('/signup', { replace: true });
+    } else {
+      navigate('/signin', { replace: true });
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isRegisterMode) {
-      const ok = await register(email, password, firstName, lastName, keepActive);
-      if (ok) navigate(from, { replace: true });
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const cleanIdentifier = companyEmailOrId.trim();
+    if (!cleanIdentifier) {
+      setErrorMessage('Please enter your Company Email or ID.');
+      return;
+    }
+    if (!password) {
+      setErrorMessage('Please enter your password.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await login(cleanIdentifier, password, keepActive);
+      if (res.success && res.role) {
+        const requestedFrom = (location.state as any)?.from?.pathname;
+        const dest =
+          requestedFrom &&
+          requestedFrom !== '/' &&
+          requestedFrom !== '/login' &&
+          requestedFrom !== '/signin' &&
+          requestedFrom !== '/signup' &&
+          isRouteAllowedForRole(requestedFrom, res.role)
+            ? requestedFrom
+            : getDefaultRouteForRole(res.role);
+
+        navigate(dest, { replace: true });
+      } else {
+        setErrorMessage(res.message || 'Invalid company credentials or password.');
+      }
+    } catch (err: any) {
+      setErrorMessage('Invalid company credentials or password.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    // 1. Validate Company Name
+    const cleanCompanyName = companyName.trim();
+    if (!cleanCompanyName) {
+      setErrorMessage('Company Name cannot be empty.');
+      return;
+    }
+
+    // 2. Validate Company Email/ID format
+    const cleanIdentifier = companyEmailOrId.trim();
+    if (!cleanIdentifier) {
+      setErrorMessage('Company Email or ID cannot be empty.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (cleanIdentifier.includes('@')) {
+      if (!emailRegex.test(cleanIdentifier)) {
+        setErrorMessage('Please enter a valid Company Email address.');
+        return;
+      }
     } else {
-      const ok = await login(email, password, keepActive);
-      if (ok) navigate(from, { replace: true });
+      const idRegex = /^[a-zA-Z0-9_\-\.]+$/;
+      if (cleanIdentifier.length < 3 || !idRegex.test(cleanIdentifier)) {
+        setErrorMessage('Company ID must be at least 3 alphanumeric characters.');
+        return;
+      }
+    }
+
+    // 3. Validate Password Security Rules
+    if (!allPasswordRulesMet) {
+      if (!hasMinLength) {
+        setErrorMessage('Password must be at least 8 characters long.');
+      } else if (!hasUpper) {
+        setErrorMessage('Password must contain at least one uppercase letter (A-Z).');
+      } else if (!hasLower) {
+        setErrorMessage('Password must contain at least one lowercase letter (a-z).');
+      } else if (!hasNumber) {
+        setErrorMessage('Password must contain at least one number (0-9).');
+      } else if (!hasSpecial) {
+        setErrorMessage('Password must contain at least one special character (e.g. @ # $ % ! * &).');
+      } else {
+        setErrorMessage('Please satisfy all password requirements.');
+      }
+      return;
+    }
+
+    // 4. Validate Confirm Password match
+    if (password !== confirmPassword) {
+      setErrorMessage('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await register({
+        companyName: cleanCompanyName,
+        companyEmailOrId: cleanIdentifier,
+        password,
+        confirmPassword,
+        role: selectedRole,
+      });
+
+      if (res.success) {
+        // DO NOT log user in automatically. Require explicit sign-in first.
+        setPassword('');
+        setConfirmPassword('');
+        const successNotice =
+          res.message || 'Company account created successfully. Please sign in with your Company Email/ID to continue.';
+        setSuccessMessage(successNotice);
+        navigate('/signin', {
+          replace: true,
+          state: {
+            registeredEmail: cleanIdentifier,
+            successMessage: successNotice,
+          },
+        });
+        setIsRegisterMode(false);
+      } else {
+        setErrorMessage(res.message || 'Company registration failed. Please verify your details.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Company registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-surface text-on-surface transition-colors relative">
-      {/* Top right theme toggle on login screen */}
+    <main className="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 bg-[#F7F5FF] dark:bg-[#0E0C1A] text-slate-900 dark:text-slate-100 transition-colors relative">
+      {/* Top right theme toggle */}
       <div className="absolute top-4 right-4 flex items-center gap-2">
         <button
           onClick={toggleDarkMode}
-          className="p-2 border border-outline-variant hover:bg-surface-container rounded-[2px] text-on-surface transition-colors"
+          className="p-2 border border-[#E8E5F2] dark:border-[#282342] hover:bg-white dark:hover:bg-[#141124] rounded-xl text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
           title="Toggle Dark Mode"
         >
-          <span className="material-symbols-outlined text-[18px]">
-            {isDarkMode ? 'light_mode' : 'dark_mode'}
-          </span>
+          {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
         </button>
       </div>
 
-      <div className="flex flex-col w-full items-center justify-center py-8">
-        {/* Archival Terminal Container */}
-        <div className="w-full max-w-[420px] bg-surface-low border border-rule rounded-[4px] p-6 sm:p-10 flex flex-col relative shadow-sm">
+      <div className="w-full max-w-[460px] py-8">
+        {/* Modern Corporate Elevated Card */}
+        <div className="bg-white dark:bg-[#141124] border border-[#E8E5F2] dark:border-[#282342] rounded-3xl p-6 sm:p-8 shadow-2xl shadow-[#6C4CE6]/10 dark:shadow-none relative">
           {/* Header */}
           <div className="flex flex-col items-center text-center">
-            <div className="w-12 h-12 mb-3 flex items-center justify-center">
-              <img
-                alt="StockSense Logo"
-                className="w-12 h-12 object-contain rounded-[2px]"
-                src={ASSET_IMAGES.brandLogo}
-                onError={(e) => {
-                  const target = e.target as HTMLElement;
-                  target.style.display = 'none';
-                }}
-              />
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#6C4CE6] to-[#8C6EF2] flex items-center justify-center text-white shadow-md shadow-[#6C4CE6]/25 mb-3.5">
+              <Layers className="w-6 h-6" />
             </div>
-            <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1 mb-2 font-medium">
-              {phoneMode 
-                ? 'Sign in with Phone'
-                : isRegisterMode ? 'Create an Account' : 'Welcome back'}
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              {isRegisterMode ? 'Register Your Company' : 'FleetFlow / StockSense Portal'}
             </h1>
-            <p className="font-body-sm text-body-sm text-secondary">
-              Inventory management system.
+            <p className="text-xs text-slate-500 dark:text-[#A5A1BE] mt-1">
+              {isRegisterMode
+                ? 'Create a dedicated corporate tenant with encrypted telemetry'
+                : 'Enterprise Logistics & Central Inventory Access'}
             </p>
           </div>
 
-          {/* Structural Hairline Rule */}
-          <div className="w-full h-[1px] bg-rule my-5" />
+          {/* Mode Switcher Tabs */}
+          <div className="mt-5 p-1 rounded-2xl bg-[#FAF9FD] dark:bg-[#1B172E] border border-[#E8E5F2] dark:border-[#282342] grid grid-cols-2 gap-1">
+            <button
+              type="button"
+              onClick={() => switchMode(false)}
+              className={`py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
+                !isRegisterMode
+                  ? 'bg-white dark:bg-[#141124] text-[#6C4CE6] dark:text-[#A78BFA] shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => switchMode(true)}
+              className={`py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
+                isRegisterMode
+                  ? 'bg-white dark:bg-[#141124] text-[#6C4CE6] dark:text-[#A78BFA] shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              Sign Up
+            </button>
+          </div>
 
-          {/* Form Section */}
-          {phoneMode ? (
-             <div className="flex flex-col gap-4">
-               {!confirmationResult ? (
-                 <>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-label-md text-label-md uppercase text-secondary tracking-wider" htmlFor="phone-first-name">
-                      First Name
-                    </label>
-                    <input
-                      id="phone-first-name"
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Jane"
-                      className="w-full h-9 px-3 bg-surface-lowest text-on-surface font-body-md text-body-md border border-rule rounded-[2px] outline-none transition-colors placeholder:text-tertiary focus:border-primary-container"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-label-md text-label-md uppercase text-secondary tracking-wider" htmlFor="phone-last-name">
-                      Last Name
-                    </label>
-                    <input
-                      id="phone-last-name"
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Doe"
-                      className="w-full h-9 px-3 bg-surface-lowest text-on-surface font-body-md text-body-md border border-rule rounded-[2px] outline-none transition-colors placeholder:text-tertiary focus:border-primary-container"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-label-md text-label-md uppercase text-secondary tracking-wider" htmlFor="phone-number">
-                      Phone Number
-                    </label>
-                    <input
-                      id="phone-number"
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="+1 234 567 8900"
-                      className="w-full h-9 px-3 bg-surface-lowest text-on-surface font-body-md text-body-md border border-rule rounded-[2px] outline-none transition-colors placeholder:text-tertiary focus:border-primary-container"
-                    />
-                  </div>
-                    <div id="recaptcha-container"></div>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          if (!(window as any).recaptchaVerifier) {
-                            (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                              size: 'invisible',
-                              callback: (response: any) => {
-                                // reCAPTCHA solved
-                              }
-                            });
-                          }
-                          const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
-                          const confirmation = await signInWithPhoneNumber(auth, formattedPhone, (window as any).recaptchaVerifier);
-                          setConfirmationResult(confirmation);
-                        } catch (error) {
-                          console.error('Phone auth error:', error);
-                          // Reset reCAPTCHA so they can try again
-                          if ((window as any).recaptchaVerifier) {
-                            (window as any).recaptchaVerifier.clear();
-                            (window as any).recaptchaVerifier = undefined;
-                          }
-                          showToast("SMS DISPATCH FAILED: Ensure phone number includes country code (+1)");
-                        }
-                      }}
-                      className="w-full mt-2 h-10 bg-primary-container hover:bg-[#8E4217] text-white font-label-lg tracking-wider uppercase rounded-[2px] transition-colors"
-                    >
-                      Send OTP
-                    </button>
-                   </>
-               ) : (
-                 <>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-label-md text-label-md uppercase text-secondary tracking-wider" htmlFor="otp">
-                      Verification Code
-                    </label>
-                    <input
-                      id="otp"
-                      type="text"
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value)}
-                      placeholder="123456"
-                      className="w-full h-9 px-3 bg-surface-lowest text-on-surface font-body-md text-body-md border border-rule rounded-[2px] outline-none transition-colors placeholder:text-tertiary focus:border-primary-container"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const res = await confirmationResult.confirm(verificationCode);
-                        const userDoc = await getDoc(doc(db, 'users', res.user.uid));
-                        if (!userDoc.exists()) {
-                          await setDoc(doc(db, 'users', res.user.uid), {
-                            email: res.user.phoneNumber,
-                            firstName,
-                            lastName,
-                            role: 'warehouse_staff',
-                            createdAt: new Date().toISOString()
-                          });
-                        }
-                        navigate(from, { replace: true });
-                      } catch (error) {
-                        showToast("INVALID VERIFICATION CODE: Please check SMS code.");
-                      }
-                    }}
-                    className="w-full mt-2 h-10 bg-primary-container hover:bg-[#8E4217] text-white font-label-lg tracking-wider uppercase rounded-[2px] transition-colors"
-                  >
-                    Verify
-                  </button>
-                 </>
-               )}
-               <button onClick={() => setPhoneMode(false)} className="mt-2 text-secondary hover:text-on-surface text-sm">
-                 Back to Email Login
-               </button>
-             </div>
-          ) : (
-            <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-              {isRegisterMode && (
-                <div className="flex gap-4">
-                  <div className="flex flex-col gap-1.5 flex-1">
-                    <label className="font-label-md text-label-md uppercase text-secondary tracking-wider" htmlFor="firstName">
-                      First Name
-                    </label>
-                    <input
-                      id="firstName"
-                      type="text"
-                      required
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Jane"
-                      className="w-full h-9 px-3 bg-surface-lowest text-on-surface font-body-md text-body-md border border-rule rounded-[2px] outline-none transition-colors placeholder:text-tertiary focus:border-primary-container"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5 flex-1">
-                    <label className="font-label-md text-label-md uppercase text-secondary tracking-wider" htmlFor="lastName">
-                      Last Name
-                    </label>
-                    <input
-                      id="lastName"
-                      type="text"
-                      required
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Doe"
-                      className="w-full h-9 px-3 bg-surface-lowest text-on-surface font-body-md text-body-md border border-rule rounded-[2px] outline-none transition-colors placeholder:text-tertiary focus:border-primary-container"
-                    />
-                  </div>
-                </div>
-              )}
-              <div className="flex flex-col gap-1.5">
-                <label className="font-label-md text-label-md uppercase text-secondary tracking-wider" htmlFor="email">
-                  Email Address
+          {/* Feedback Banners */}
+          {errorMessage && (
+            <div className="mt-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 flex items-start gap-2.5 text-xs text-rose-700 dark:text-rose-300 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mt-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 flex items-start gap-2.5 text-xs text-emerald-700 dark:text-emerald-300 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          {isRegisterMode ? (
+            /* ================= SIGN UP FORM (Company Name, Company Email/ID, Password, Confirm Password) ================= */
+            <form onSubmit={handleSignUp} className="flex flex-col gap-3 mt-5">
+              {/* Company Name */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300" htmlFor="reg-company-name">
+                  Company Name
                 </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="username"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
-                  className="w-full h-9 px-3 bg-surface-lowest text-on-surface font-body-md text-body-md border border-rule rounded-[2px] outline-none transition-colors placeholder:text-tertiary focus:border-primary-container"
-                />
+                <div className="relative">
+                  <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    id="reg-company-name"
+                    type="text"
+                    required
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="e.g. Acme Logistics"
+                    className="h-10 w-full pl-9 pr-3 bg-[#FAF9FD] dark:bg-[#1B172E] border border-[#E8E5F2] dark:border-[#282342] rounded-xl text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6]"
+                  />
+                </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="font-label-md text-label-md uppercase text-secondary tracking-wider flex items-center gap-1.5" htmlFor="password">
-                    <span>Password</span>
-                  </label>
-                  <button type="button" onClick={handleResetPassword} className="font-body-sm text-body-sm text-secondary hover:text-on-surface hover:underline transition-colors focus:outline-none cursor-pointer">
-                    Forgot password?
-                  </button>
-                </div>
-                <div className="relative flex items-center">
+              {/* Company Email / ID */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300" htmlFor="reg-company-id">
+                  Company Email or ID
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
-                    id="password"
-                    name="password"
+                    id="reg-company-id"
+                    type="text"
+                    required
+                    value={companyEmailOrId}
+                    onChange={(e) => setCompanyEmailOrId(e.target.value)}
+                    placeholder="e.g. admin@company.com or COMPANY-ID"
+                    className="h-10 w-full pl-9 pr-3 bg-[#FAF9FD] dark:bg-[#1B172E] border border-[#E8E5F2] dark:border-[#282342] rounded-xl text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6]"
+                  />
+                </div>
+                <span className="text-[10px] text-slate-400 dark:text-[#8D88A6] pl-0.5">
+                  Use your corporate email or unique company ID for sign-in.
+                </span>
+              </div>
+
+              {/* Operational Role Selection */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300" htmlFor="reg-role">
+                  Operational Role
+                </label>
+                <div className="relative">
+                  <UserCheck className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <select
+                    id="reg-role"
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value as UserRole)}
+                    className="h-10 w-full pl-9 pr-8 bg-[#FAF9FD] dark:bg-[#1B172E] border border-[#E8E5F2] dark:border-[#282342] rounded-xl text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6] cursor-pointer"
+                  >
+                    <option value="admin">Admin (Executive Dashboard &amp; Full Access)</option>
+                    <option value="inventory_manager">Inventory Manager (Stock &amp; Forecasting)</option>
+                    <option value="warehouse_staff">Warehouse Staff (Barcode / QR Scanner Station)</option>
+                    <option value="purchase_manager">Purchase Manager (Purchase Orders &amp; Receipts)</option>
+                  </select>
+                </div>
+                <span className="text-[10px] text-slate-400 dark:text-[#8D88A6] pl-0.5">
+                  Your workspace dashboard will automatically adapt to this role.
+                </span>
+              </div>
+
+              {/* Password */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300" htmlFor="reg-password">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    id="reg-password"
                     type={showPassword ? 'text' : 'password'}
                     required
-                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full h-9 pl-3 pr-10 bg-surface-lowest text-on-surface font-body-md text-body-md border border-rule rounded-[2px] outline-none transition-colors placeholder:text-tertiary focus:border-primary-container"
+                    placeholder="•••••••• (e.g. StockSense@123)"
+                    className="h-10 w-full pl-9 pr-10 bg-[#FAF9FD] dark:bg-[#1B172E] border border-[#E8E5F2] dark:border-[#282342] rounded-xl text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6]"
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-0 top-0 bottom-0 px-2.5 flex items-center justify-center text-secondary hover:text-on-surface">
-                    <span className="material-symbols-outlined text-[18px]">
-                      {showPassword ? 'visibility_off' : 'visibility'}
-                    </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((p) => !p)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer"
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mt-1 select-none">
-                <label htmlFor="persist-session" className="flex items-center gap-2 cursor-pointer group">
-                  <input id="persist-session" type="checkbox" checked={keepActive} onChange={(e) => setKeepActive(e.target.checked)} className="sr-only peer" />
-                  <span className="w-[14px] h-[14px] border border-secondary rounded-[2px] bg-surface-lowest peer-checked:bg-on-surface peer-checked:border-on-surface flex items-center justify-center transition-colors">
-                    <svg className="w-2.5 h-2.5 text-surface opacity-0 peer-checked:opacity-100 fill-current" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" clipRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
-                    </svg>
-                  </span>
-                  <span className="font-body-sm text-body-sm text-secondary group-hover:text-on-surface transition-colors">
-                    Remember me
-                  </span>
+              {/* Password Requirements Checklist */}
+              <div className="p-3 rounded-2xl bg-[#FAF9FD] dark:bg-[#1B172E] border border-[#E8E5F2] dark:border-[#282342] flex flex-col gap-2">
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-[#A5A1BE]">
+                  Password requirements:
+                </span>
+                <ul className="flex flex-col gap-1.5">
+                  {passwordRules.map((rule, idx) => (
+                    <li
+                      key={idx}
+                      className={`flex items-center gap-2 text-xs transition-colors duration-150 ${
+                        rule.met
+                          ? 'text-emerald-600 dark:text-emerald-400 font-medium'
+                          : 'text-slate-400 dark:text-slate-500'
+                      }`}
+                    >
+                      {rule.met ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[2.5]" />
+                      ) : (
+                        <div className="w-3.5 h-3.5 rounded-full border border-slate-300 dark:border-slate-600 shrink-0" />
+                      )}
+                      <span>{rule.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Confirm Password */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300" htmlFor="reg-confirm-password">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    id="reg-confirm-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`h-10 w-full pl-9 pr-10 bg-[#FAF9FD] dark:bg-[#1B172E] border rounded-xl text-slate-900 dark:text-white text-xs outline-none focus:ring-2 transition-all ${
+                      confirmPassword.length > 0 && confirmPassword !== password
+                        ? 'border-rose-300 dark:border-rose-800/80 focus:ring-rose-500/20 focus:border-rose-500'
+                        : confirmPassword.length > 0 && confirmPassword === password
+                        ? 'border-emerald-300 dark:border-emerald-800/80 focus:ring-emerald-500/20 focus:border-emerald-500'
+                        : 'border-[#E8E5F2] dark:border-[#282342] focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6]'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((p) => !p)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer"
+                    title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {confirmPassword.length > 0 && confirmPassword !== password && (
+                  <div className="flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400 mt-0.5 animate-in fade-in">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>Passwords do not match.</span>
+                  </div>
+                )}
+                {confirmPassword.length > 0 && confirmPassword === password && (
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 mt-0.5 animate-in fade-in">
+                    <Check className="w-3.5 h-3.5 shrink-0" />
+                    <span>Passwords match.</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Create Account Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-2 h-11 w-full bg-[#6C4CE6] hover:bg-[#5839D6] text-white text-xs font-semibold rounded-xl shadow-md shadow-[#6C4CE6]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Registering Company...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Register Company</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          ) : (
+            /* ================= SIGN IN FORM (Company Email/ID + Password) ================= */
+            <form onSubmit={handleSignIn} className="flex flex-col gap-3.5 mt-5">
+              {/* Company Email / ID */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300" htmlFor="signin-id">
+                  Company Email or ID
+                </label>
+                <div className="relative">
+                  <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    id="signin-id"
+                    type="text"
+                    required
+                    value={companyEmailOrId}
+                    onChange={(e) => setCompanyEmailOrId(e.target.value)}
+                    placeholder="e.g. admin@company.com or COMPANY-ID"
+                    className="h-10 w-full pl-9 pr-3 bg-[#FAF9FD] dark:bg-[#1B172E] border border-[#E8E5F2] dark:border-[#282342] rounded-xl text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6]"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300" htmlFor="signin-password">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    id="signin-password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="h-10 w-full pl-9 pr-10 bg-[#FAF9FD] dark:bg-[#1B172E] border border-[#E8E5F2] dark:border-[#282342] rounded-xl text-slate-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-[#6C4CE6]/20 focus:border-[#6C4CE6]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((p) => !p)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer"
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Keep session active */}
+              <div className="flex items-center justify-between text-xs pt-0.5">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600 dark:text-slate-400">
+                  <input
+                    type="checkbox"
+                    checked={keepActive}
+                    onChange={(e) => setKeepActive(e.target.checked)}
+                    className="accent-[#6C4CE6] rounded"
+                  />
+                  <span>Keep company session active</span>
                 </label>
               </div>
 
-              <button type="submit" className="w-full mt-2 h-10 bg-primary-container hover:bg-[#8E4217] text-white font-label-lg tracking-wider uppercase rounded-[2px] transition-colors flex items-center justify-center gap-2">
-                <span>{isRegisterMode ? 'Register' : 'Log In'}</span>
-                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+              {/* Sign In Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-1 h-11 w-full bg-[#6C4CE6] hover:bg-[#5839D6] text-white text-xs font-semibold rounded-xl shadow-md shadow-[#6C4CE6]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Verifying Credentials...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In to Company Portal</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
-
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const provider = new GoogleAuthProvider();
-                      const res = await signInWithPopup(auth, provider);
-                      const userDoc = await getDoc(doc(db, 'users', res.user.uid));
-                      if (!userDoc.exists()) {
-                        await setDoc(doc(db, 'users', res.user.uid), {
-                          email: res.user.email,
-                          role: 'warehouse_staff',
-                          createdAt: new Date().toISOString()
-                        });
-                      }
-                      navigate(from, { replace: true });
-                    } catch (e) {
-                      console.error(e);
-                    }
-                  }}
-                  className="flex-1 h-10 border border-rule hover:bg-surface-lowest flex items-center justify-center gap-2 rounded-[2px] font-label-md text-on-surface uppercase tracking-wider"
-                >
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-4 h-4" />
-                  Google
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPhoneMode(true)}
-                  className="flex-1 h-10 border border-rule hover:bg-surface-lowest flex items-center justify-center gap-2 rounded-[2px] font-label-md text-on-surface uppercase tracking-wider"
-                >
-                  <span className="material-symbols-outlined text-[18px]">phone_iphone</span>
-                  Phone
-                </button>
-              </div>
             </form>
           )}
 
-          {/* Lower Ledger Routing & Footnote */}
-          <div className="mt-6 pt-4 border-t border-rule flex flex-col items-center gap-1.5 text-center">
-            <div className="font-body-sm text-body-sm text-secondary">
-              {isRegisterMode ? 'Already have an account?' : 'Don\'t have an account?'}{' '}
-              <button
-                type="button"
-                onClick={() => setIsRegisterMode(!isRegisterMode)}
-                className="text-on-surface hover:underline font-medium ml-1 transition-colors"
-              >
-                {isRegisterMode ? 'Log in here' : 'Sign up here'}
-              </button>
-            </div>
+          {/* Toggle Register / Login Footer */}
+          <div className="mt-5 text-center">
+            {isRegisterMode ? (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Already registered your company?{' '}
+                <button
+                  type="button"
+                  onClick={() => switchMode(false)}
+                  className="font-semibold text-[#6C4CE6] dark:text-[#A78BFA] hover:underline cursor-pointer ml-1"
+                >
+                  Sign In
+                </button>
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Need to register a new company?{' '}
+                <button
+                  type="button"
+                  onClick={() => switchMode(true)}
+                  className="font-semibold text-[#6C4CE6] dark:text-[#A78BFA] hover:underline cursor-pointer ml-1"
+                >
+                  Sign Up
+                </button>
+              </p>
+            )}
           </div>
         </div>
       </div>

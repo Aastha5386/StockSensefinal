@@ -1,17 +1,15 @@
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { apiAuth } from './api';
+import { UserRole } from '../types';
 
-export type UserRole = 'admin' | 'inventory_manager' | 'warehouse_staff';
+export type { UserRole };
 
 /**
- * Promotes or changes a user's role by updating their Firestore document.
- * This will only succeed if the caller's own Firestore document has role: 'admin',
- * as enforced by firestore.rules.
+ * Promotes or changes a user's role by calling the StockSense Express API.
+ * Only authenticated administrators can execute this endpoint.
  */
 export const changeUserRole = async (uid: string, role: UserRole): Promise<void> => {
   try {
-    const userRef = doc(db, 'users', uid);
-    await updateDoc(userRef, { role });
+    await apiAuth.updateUserRole(uid, role);
   } catch (error: any) {
     console.error('Failed to change user role:', error);
     throw error;
